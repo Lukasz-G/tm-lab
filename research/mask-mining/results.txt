@@ -1,0 +1,61 @@
+================================================================================
+Satisfied-mask mining on Hnilov's published 40-clause MNIST model
+================================================================================
+Loading model from D:\Moje dokumenty\Code\TM_FPTM_GraphTM\reference\BooBSD-FuzzyPatternTM\models\tm_optimized_40_fp.tm... Done.
+
+model loaded, booleanization verified at 0.9755 accuracy
+mining 10000 examples, LF = 5
+
+400 clause slots fired at least once, of 400
+
+MEDIAN OVER CLAUSES
+--------------------------------------------------------------------------------
+  included literals              23.5
+  firings (of 10000)            859.0
+  distinct satisfied masks      195.5
+  distinct / firings            0.228   (1.0 = every firing a different mask)
+  top-1 mask coverage           0.102
+  top-10 mask coverage          0.418   <- the decomposition criterion
+  normalised entropy            0.642   (0 = one mask, 1 = all distinct)
+  core literals (>=95% of firings) 11.0 of 23.5 included
+
+ranking restricted to the 241 clauses with >= 500 firings
+
+MOST CONCENTRATED (lowest normalised entropy)
+--------------------------------------------------------------------------------
+  class 6 neg clause 17:  34 literals,  7007 firings,   161 distinct, top-10 0.846, core 29, H 0.257
+  class 0 neg clause 17:  18 literals,  4625 firings,   137 distinct, top-10 0.769, core 12, H 0.343
+  class 9 neg clause  1:  35 literals,  7737 firings,   187 distinct, top-10 0.706, core 30, H 0.347
+  class 7 neg clause 14:  20 literals,  4755 firings,   146 distinct, top-10 0.748, core 14, H 0.360
+  class 5 neg clause  1:  16 literals,  1743 firings,   134 distinct, top-10 0.797, core 10, H 0.362
+
+MOST DIFFUSE (highest normalised entropy)
+--------------------------------------------------------------------------------
+  class 5 pos clause  3:  28 literals,   888 firings,   386 distinct, top-10 0.159, core  8, H 0.819
+  class 6 pos clause  3:  27 literals,   602 firings,   279 distinct, top-10 0.249, core 11, H 0.804
+  class 9 pos clause 19:  32 literals,   660 firings,   345 distinct, top-10 0.283, core 16, H 0.803
+  class 0 pos clause  5:  31 literals,   520 firings,   240 distinct, top-10 0.312, core 14, H 0.779
+  class 3 neg clause  6:  18 literals,   590 firings,   227 distinct, top-10 0.276, core  3, H 0.773
+
+among those: median top-10 coverage 0.454, 39% above 0.5, 0% below 0.05
+
+IS THE CORE AN ACTUAL RULE?  (strict conjunction, evaluated standalone)
+--------------------------------------------------------------------------------
+  clause                 core  fires   P(class)   lift    reads as
+  -- positive clauses (core should select the class) --
+  class 1 pos clause  1   41    740     0.995    8.76x   rule holds
+  class 1 pos clause 19   39    520     0.994    8.76x   rule holds
+  class 7 pos clause  2   38    705     0.987    9.60x   rule holds
+  class 1 pos clause 11   37    449     0.998    8.79x   rule holds
+  -- negative clauses (core should avoid the class) --
+  class 6 neg clause 17   29   5888     0.004    0.04x   rule holds
+  class 0 neg clause 17   12   4964     0.003    0.03x   rule holds
+  class 9 neg clause  1   30   7462     0.013    0.13x   rule holds
+  class 7 neg clause 14   14   5537     0.012    0.11x   rule holds
+
+CORE-AS-RULE OVER ALL 241 CLAUSES WITH >= 500 FIRINGS
+--------------------------------------------------------------------------------
+  positive clauses (n=40): median lift 7.37x, quartiles 4.70 / 8.79, core 24 of 35 literals
+    core carries the clause's class signal in 37 of 40 (92%)
+  negative clauses (n=198): median lift 0.39x, quartiles 0.13 / 0.90, core 6 of 17 literals
+    core carries the clause's class signal in 116 of 198 (59%)

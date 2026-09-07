@@ -29,6 +29,15 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
   queue because feedback currently discards that magnitude in 91.6% of firings. Literal
   satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
 
+- **[`mask-mining/`](mask-mining/)** — is a fuzzy clause recoverable as a rule? **Yes, and this is
+  the first clearly positive result here.** Not "k rules plus a tail" as hypothesised — the median
+  clause has 195 distinct satisfied masks and top-10 coverage of only 42% — but a **strict
+  conjunctive core plus a tolerance tail**: 11 of 23.5 literals are satisfied in >=95% of firings.
+  Extracted standalone, that core is a real rule. Positive-clause cores carry the class signal in
+  **92%** of cases at a median **7.37x** lift, the best firing at 99%+ precision over hundreds of
+  examples. Negative cores are smaller and hold only 59% of the time, so half the model is markedly
+  less explicable than the other half.
+
 - **[`annealed-lf/`](annealed-lf/)** — does annealing `LF` fuzzy-to-strict help? **No, and the
   schedule is irrelevant: only the endpoint matters.** Both arms ending at `LF`=1 finish near 0.94,
   both ending at `LF`=5 finish at 0.971, regardless of where they started. Best-vs-final exposes the
@@ -88,10 +97,6 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
   finding: `L` is a growth gate rather than a cap — `L`=10 with clauses holding 12 to 54 literals.
 
 ## Queued
-
-- **satisfied-mask mining** — frequent-itemset mining over the recorded masks, turning
-  "core plus tail" into named sub-rules. Now justified by the spread measurement rather than
-  assumed. Extends `vote-histogram/`.
 
 - **message-symbol aliasing** — the residual from `aliasing/`. Cyclic-shift binding correlates
   message codes, so the independence assumption fails and the existing result is optimistic there.
