@@ -6,7 +6,7 @@ Not a port of any one implementation. FPTM and GraphTM each leave semantics unde
 where they would have to meet, so combining them is a new algorithm, and this repo is set up to
 treat it as one: decisions before code, gates that can fail, negative results kept.
 
-## Status: scoping complete, no algorithm code yet
+## Status: scoping complete, substrate unblocked, no algorithm code yet
 
 ### Settled: the clause-vote ceiling
 
@@ -47,12 +47,18 @@ and bit granularity — the cheaper inner loop, with bit-packing intact — is t
 this does not cover is message symbols, whose codes are cyclic shifts of one another rather than
 independent draws.
 
-### Open
+### Settled: what this repo is
 
-One question remains, deliberately not guessed at.
+tm-lab is a lab. Code accumulates here, and a standalone registerable package gets extracted if and
+when something earns it. The `packages/` layout makes that split a file move rather than a refactor,
+so deferring the decision costs almost nothing.
 
-1. **Deliverable form.** One package or several, and whether the model format is pitched for
-   adoption by other implementations. Decides package boundaries, so it is a day-one call.
+The one exception is the **model format**. Its value is adoption by other implementations, and that
+does not get cheaper by waiting — not because the decision is urgent, but because whatever
+serialization exists when the question is finally asked is what ends up being formalized. So the
+cheap insurance is taken up front: a versioned header plus raw packed arrays, readable from Python
+in fifty lines with no Julia runtime. Julia `Serialization` is disqualified — it is fragile across
+versions and struct changes, which the measurement track already has to work around.
 
 ## Layout
 
@@ -63,8 +69,8 @@ NOTICE.md            third-party attribution, and when a file needs an inline no
 ```
 
 One package today. `packages/` exists so that booleanization and graph work can be added as
-directories rather than as a refactor — the split into separately registerable packages is the open
-question above, and this layout does not pre-empt it.
+directories rather than as a refactor, and so that pulling any of them out as a standalone package
+later stays a file move.
 
 ## Getting started
 

@@ -40,6 +40,11 @@ module TMCore
 #     parameter — see research/aliasing/ for the arithmetic and why symbol granularity is the coarser
 #     of the two rather than the safer.
 #
+# Model format: a versioned header plus raw packed arrays, readable from Python in fifty lines
+# with no Julia runtime. Not Julia `Serialization` — it does not survive a Julia upgrade or a struct
+# change, which disqualifies it as a format. This costs nothing now and is the one thing that does
+# not get cheaper by deferring, because what gets formalized later is whatever exists by then.
+#
 # Files that transfer Tsetlin.jl's packed layout or inner loop must carry its MIT notice inline.
 # See NOTICE.md.
 
