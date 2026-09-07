@@ -29,6 +29,12 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
   queue because feedback currently discards that magnitude in 91.6% of firings. Literal
   satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
 
+- **[`format-crosscheck/`](format-crosscheck/)** — is the model format actually a format? A model
+  trained in Julia is read back by `tools/read_tmcore.py`, a pure-standard-library Python reader
+  written against the spec rather than against the writer, which reproduces **every per-class score
+  exactly** on 50 MNIST cases. Exercises chunk padding at width 784, array ordering, the ceiling
+  policy code, and the stored-count consistency check — none of which a self-round-trip would test.
+
 - **[`mnist-training/`](mnist-training/)** — does TMCore reproduce published FPTM end to end?
   Trained from scratch on full MNIST it reaches **0.9769** against the published model's 0.9809, and
   reproduces the characteristic clause-size overshoot (median 16, max 46, under `L`=10) that a wrong

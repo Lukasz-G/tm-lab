@@ -163,5 +163,7 @@ end
 
 include("test_feedback.jl")
 include("test_model.jl")
+include("test_format.jl")
+include("test_inspect.jl")
 
 end

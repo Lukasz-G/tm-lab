@@ -6,7 +6,7 @@ Not a port of any one implementation. FPTM and GraphTM each leave semantics unde
 where they would have to meet, so combining them is a new algorithm, and this repo is set up to
 treat it as one: decisions before code, gates that can fail, negative results kept.
 
-## Status: trains, and reproduces published FPTM
+## Status: substrate complete
 
 Running against Hnilov's **published** 40-clause MNIST model (pipeline validated at 97.55% test
 accuracy, so it reproduces the model rather than merely loading it),
@@ -98,6 +98,20 @@ Verified three independent ways rather than by smoke test:
 That last gap is provenance, not defect — the published model is a merged best-of-512 ensemble
 selected on the test set.
 
+It also carries a **language-neutral model format** ([spec](docs/model-format.md)) — a fixed binary
+header and raw packed arrays, deliberately not Julia `Serialization`, which survives neither a Julia
+upgrade nor a struct rename. A model trained in Julia is read back by
+[tools/read_tmcore.py](tools/read_tmcore.py), a pure-standard-library Python reader written against
+the spec rather than against the writer, reproducing every per-class score exactly. Inference-only
+models drop the automata and are 8x smaller at identical predictions.
+
+The **measurement hook** the interpretability work needs is part of the substrate rather than bolted
+on: `observe` records per-clause vote distributions and satisfied masks at the cost of one extra AND
+per chunk. On a model trained here, 93.8% of nonzero clause votes are strictly interior —
+independently reproducing the finding from the published model.
+
+Single-threaded inference runs at ~107,000 predictions/s on 784-bit MNIST with 400 clause slots.
+
 ## Layout
 
 ```
@@ -127,7 +141,7 @@ so a fresh clone resolves without one.
 
 | Track | What | State |
 |---|---|---|
-| A | Substrate — evaluator, typed feedback, training | reproduces published FPTM; model format and harness still to do |
+| A | Substrate — evaluator, typed feedback, training, model format, harness | **done** |
 | B | Measurement — satisfied-mask recording, vote histograms, rule mining | first results in |
 | C | Booleanization — thermometer, convolutional-kernel, n-gram encoders | later |
 | D | Algorithmic variants, tested on flat FPTM | after A |

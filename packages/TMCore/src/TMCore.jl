@@ -41,6 +41,9 @@ export TMInput,
        FeedbackRule, TypeIa, TypeIb, TypeII, feedback!,
        ClassBinding, OneVsRest, TMClassifier, vote, score, predict, accuracy,
        train!, update_class!, literal_counts,
+       ClauseStats, observe, interior_fraction, satisfaction_spread, vote_histogram,
+       BenchResult, benchmark, model_bytes,
+       save_model, load_model,
        Hyperparameters, alias_count, check_symbol_encoding, check_transfer
 
 include("input.jl")
@@ -50,5 +53,8 @@ include("clauses.jl")
 include("feedback.jl")
 include("hyperparameters.jl")
 include("model.jl")
+include("inspect.jl")
+include("bench.jl")
+include("format.jl")
 
 end # module TMCore
