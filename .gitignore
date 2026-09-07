@@ -2,6 +2,12 @@
 .claude/
 CLAUDE.md
 
+# Local research background — never committed.
+# papers/    third-party PDFs, not ours to redistribute
+# reference/ other projects' source, read for comparison only
+papers/
+reference/
+
 # Julia
 Manifest.toml
 *.jl.cov

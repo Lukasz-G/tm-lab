@@ -16,15 +16,23 @@ written up here, not deleted.
   granularity, and therefore what the evaluator is parameterized over. Follow with a 5-10 symbol
   toy only if the arithmetic does not already settle it. Pass/fail stated in advance: bit-granular
   matching degrades toward chance as `V` grows at fixed `H`, while symbol-granular tracks strict.
+
 - **`vote-histogram/`** — run against upstream Tsetlin.jl and Hnilov's published IMDb
   one-clause-per-class model. Checkpoint zero is whether the model loads at all under Julia 1.11.9;
   `save`/`load` are Julia `Serialization` and fragile across versions and struct changes. Then, in
   order of cost: per-clause vote histogram, marginal satisfied-frequency per included literal, and
   only then frequent-itemset mining over the satisfied masks. Bimodal near 0 and near `LF` means the
   fuzziness is decorative; spread means it is load-bearing.
-  Cheap addition while the model is loaded: **count clauses carrying fewer than `LF` included
-  literals.** The two candidate clause-vote ceilings coincide when every clause has at least `LF`
-  literals, so this says empirically whether the open question is reachable in practice.
+
+- **`ceiling-divergence/`** — cheap, and shares a loaded model with the above. The FPTM paper caps a
+  clause's vote ceiling at its literal count; Tsetlin.jl uses `LF` flat. The two differ only for
+  clauses holding between 1 and `LF - 1` literals, so **count how many clauses are in that band**,
+  and at what point in training they leave it. The published IMDb configuration has `L` = `LF` = 64
+  at one clause per class, which puts a fully grown clause exactly at the boundary — so the gap is
+  predicted to be a training-time phenomenon that closes at convergence. That prediction is the
+  pass/fail criterion. If it holds, the flat form is a safe fast path and the paper's form matters
+  only for transient behaviour; if clauses sit below `LF` at convergence, the two implementations
+  are not reproducing the same model and every published number needs re-reading.
 
 ## Data
 
