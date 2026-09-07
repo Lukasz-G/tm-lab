@@ -1,0 +1,30 @@
+MNIST test: 10000 images, 28x28
+Loading model from D:\Moje dokumenty\Code\TM_FPTM_GraphTM\reference\BooBSD-FuzzyPatternTM\models\tm_optimized_40_fp.tm... Done.
+
+orientation check: raw 0.9755, transposed 0.1395
+using raw orientation, accuracy on 2000 test images = 0.9755
+
+======================================================================
+POOLED VOTE DISTRIBUTION  (400 clause slots x 10000 inputs)
+======================================================================
+  vote 0 :   3346592   83.66%  ##################################################
+  vote 1 :    182400    4.56%  ###
+  vote 2 :    163199    4.08%  ##
+  vote 3 :    145972    3.65%  ##
+  vote 4 :    107091    2.68%  ##
+  vote 5 :     54746    1.37%  #
+
+nonzero votes            :    653408   16.34% of all evaluations
+  ...at the ceiling (=5) :     54746    8.38% of nonzero
+  ...strictly interior    :    598662   91.62% of nonzero  <- the load-bearing fraction
+
+======================================================================
+PER-CLAUSE SHAPE
+======================================================================
+interior fraction per clause: median 0.936, mean 0.913, min 0.000, max 1.000
+clauses that are effectively strict (interior < 5%): 2 of 400
+literal satisfaction spread (max-min freq): median 0.638, min 0.000
+
+Low spread means every included literal matches about equally often, so the satisfied
+mask carries little structure. High spread means some literals are near-always on and
+the clause has a recoverable core plus a tail.

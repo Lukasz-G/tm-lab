@@ -6,7 +6,16 @@ Not a port of any one implementation. FPTM and GraphTM each leave semantics unde
 where they would have to meet, so combining them is a new algorithm, and this repo is set up to
 treat it as one: decisions before code, gates that can fail, negative results kept.
 
-## Status: scoping complete, substrate unblocked, no algorithm code yet
+## Status: measurement track has results; substrate unblocked, no algorithm code yet
+
+Running against Hnilov's **published** 40-clause MNIST model (pipeline validated at 97.55% test
+accuracy, so it reproduces the model rather than merely loading it),
+[research/vote-histogram/](research/vote-histogram/) answers the first real question: **FPTM's
+fuzziness is load-bearing, not decorative.** Of the clause evaluations that vote at all, 91.6% land
+strictly inside the interval rather than at the ceiling. So the m-of-n interpretability problem is
+real and worth mining — this was falsifiable in the other direction and did not fall that way — and
+vote-proportional feedback moves up the queue, since feedback currently binarizes at `vote > 0` and
+discards that magnitude in 91.6% of firings.
 
 ### Settled: the clause-vote ceiling
 
@@ -21,9 +30,20 @@ implementation, Tsetlin.jl, uses **`LF` flat** — no literal-count term at all.
 empty clauses and for clauses holding at least `LF` literals, and diverge for everything in between,
 where the flat form over-votes.
 
-The paper is normative. The ceiling becomes a policy parameter so both forms stay reproducible on
-one evaluator, and how much the divergence actually costs is left to measurement rather than
-argument — see [research/](research/).
+A third source breaks the tie: FuzzyPatternTM, Hnilov's own *reference* implementation, matches the
+paper exactly — empty-clause special case and all. Two of three agree; the optimized rewrite is the
+outlier, and still is at upstream HEAD.
+
+Measured rather than argued in [research/ceiling-divergence/](research/ceiling-divergence/): on the
+published model, 2 of 400 clause slots fall in the divergence band, worth 0.40% of ceiling mass. So
+flat `LF` is a safe fast path at convergence, and the paper's ceiling matters during training and
+for degenerate clauses. The paper is normative; the ceiling is a policy parameter so both stay
+reproducible on one evaluator.
+
+That experiment also turned up something not being looked for: **`L` is a growth gate, not a cap.**
+It is checked before an increment pass that pushes many automata over the include threshold at once,
+so it decides whether a clause may grow this round rather than bounding its size. On the published
+model `L` = 10 while clauses hold 12 to 54 literals — every clause exceeds its own documented cap.
 
 ### Settled: bit- versus symbol-granular fuzziness
 
@@ -90,7 +110,7 @@ so a fresh clone resolves without one.
 | Track | What | State |
 |---|---|---|
 | A | Substrate — evaluator, typed feedback, model format, harness | unblocked |
-| B | Measurement — satisfied-mask recording, vote histograms, rule mining | can start now, independent of A |
+| B | Measurement — satisfied-mask recording, vote histograms, rule mining | first results in |
 | C | Booleanization — thermometer, convolutional-kernel, n-gram encoders | later |
 | D | Algorithmic variants, tested on flat FPTM | after A |
 | E | Graph — per-node evaluation, message passing, depth | last |

@@ -1,0 +1,65 @@
+upstream FuzzyPatternTM @ e25a51e 2026-06-21
+upstream Tsetlin.jl     @ 94e7828 2026-08-21
+
+Loading model from D:\Moje dokumenty\Code\TM_FPTM_GraphTM\reference\BooBSD-FuzzyPatternTM\models\tm_optimized_40_fp.tm... Done.
+
+model: 40 clauses/class, 10 classes, T=10, S=125, L=10, LF=5
+
+======================================================================
+LITERALS PER CLAUSE   (400 clause slots total)
+======================================================================
+   1 literals :    2 clauses    0.5%  <- DIVERGENCE BAND
+  12 literals :    3 clauses    0.8%
+  13 literals :   14 clauses    3.5%
+  14 literals :   17 clauses    4.2%
+  15 literals :   29 clauses    7.2%
+  16 literals :   24 clauses    6.0%
+  17 literals :   21 clauses    5.2%
+  18 literals :   27 clauses    6.8%
+  19 literals :   12 clauses    3.0%
+  20 literals :    9 clauses    2.2%
+  21 literals :   16 clauses    4.0%
+  22 literals :    6 clauses    1.5%
+  23 literals :   20 clauses    5.0%
+  24 literals :   16 clauses    4.0%
+  25 literals :   16 clauses    4.0%
+  26 literals :   17 clauses    4.2%
+  27 literals :   16 clauses    4.0%
+  28 literals :   18 clauses    4.5%
+  29 literals :   12 clauses    3.0%
+  30 literals :   17 clauses    4.2%
+  31 literals :   11 clauses    2.8%
+  32 literals :   10 clauses    2.5%
+  33 literals :   12 clauses    3.0%
+  34 literals :    8 clauses    2.0%
+  35 literals :    8 clauses    2.0%
+  36 literals :    3 clauses    0.8%
+  37 literals :    4 clauses    1.0%
+  38 literals :    1 clauses    0.2%
+  39 literals :    4 clauses    1.0%
+  40 literals :    4 clauses    1.0%
+  41 literals :    1 clauses    0.2%
+  42 literals :    1 clauses    0.2%
+  43 literals :    6 clauses    1.5%
+  44 literals :    4 clauses    1.0%
+  45 literals :    1 clauses    0.2%
+  46 literals :    2 clauses    0.5%
+  47 literals :    2 clauses    0.5%
+  48 literals :    2 clauses    0.5%
+  49 literals :    2 clauses    0.5%
+  52 literals :    1 clauses    0.2%
+  54 literals :    1 clauses    0.2%
+
+empty (n = 0)          :    0    0.0%
+divergence (0 < n < LF):    2    0.5%   <- the only place the two disagree
+at or above LF         :  398   99.5%
+
+======================================================================
+AGGREGATE CEILING  (max achievable vote mass, all clause slots)
+======================================================================
+  paper / FuzzyPatternTM :   1992
+  Tsetlin.jl flat LF     :   2000
+  flat over-votes by     :      8  (0.40% higher)
+
+T = 10, so a class vote saturates at T long before either ceiling.
+The ratio above is what matters, not the absolute mass.

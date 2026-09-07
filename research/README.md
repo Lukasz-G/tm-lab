@@ -1,40 +1,47 @@
 # research/
 
 Experiments, measurement, and one-off analysis. **Not a package** — scripts here may depend on
-anything, including upstream Tsetlin.jl, and are not held to the API stability or test coverage
+anything, including upstream implementations, and are not held to the API stability or test coverage
 expected of `packages/`.
 
-Each experiment gets a directory with its own `Project.toml` and a `README.md` stating the question,
-the pass/fail criterion **decided in advance**, and the answer once it has one. A negative result is
-written up here, not deleted.
+Each experiment gets a directory with a `README.md` stating the question, the pass/fail criterion
+**decided in advance**, and the answer once it has one. A negative result is written up here, not
+deleted.
+
+Upstream implementations are **cloned on demand, not vendored** — [`upstream.jl`](upstream.jl)
+fetches them into `reference/`, which is gitignored. So a fresh checkout reproduces every result
+without carrying anyone else's source in our history.
 
 ## Answered
 
-- **`aliasing/`** — bit- versus symbol-granular fuzziness over a sparse distributed code. The
-  criterion passes at `H` <= 2 and fails at `H` >= 4, so `H` is the lever rather than the
+- **[`aliasing/`](aliasing/)** — bit- versus symbol-granular fuzziness over a sparse distributed
+  code. The criterion passes at `H` <= 2 and fails at `H` >= 4, so `H` is the lever rather than the
   granularity; and symbol granularity turns out to be the coarser of the two, buying
-  interpretability rather than correctness. Track A takes a construction-time `(D, H, V)` guard
-  instead of a granularity parameter. Open residual: message symbols, whose codes are cyclic shifts
+  interpretability rather than correctness. The evaluator takes a construction-time `(D, H, V)`
+  guard instead of a granularity parameter. Residual: message symbols, whose codes are cyclic shifts
   rather than independent draws.
+
+- **[`vote-histogram/`](vote-histogram/)** — is FPTM's fuzziness load-bearing or decorative?
+  **Load-bearing, decisively.** Of the evaluations that vote at all, 91.62% are strictly interior
+  and only 8.38% reach the ceiling; per-clause interior fraction has median 0.936. So the m-of-n
+  interpretability problem is real and worth mining, and vote-proportional feedback moves up the
+  queue because feedback currently discards that magnitude in 91.6% of firings. Literal
+  satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
+
+- **[`ceiling-divergence/`](ceiling-divergence/)** — how far does Tsetlin.jl's flat-`LF` ceiling
+  depart from the paper's `min(n, LF)`? **Prediction held**: 2 of 400 clause slots in the divergence
+  band, 0.40% of aggregate ceiling mass, so flat `LF` is a safe fast path at convergence. Unplanned
+  finding: `L` is a growth gate rather than a cap — `L`=10 with clauses holding 12 to 54 literals.
 
 ## Queued
 
-- **`vote-histogram/`** — run against upstream Tsetlin.jl and Hnilov's published IMDb
-  one-clause-per-class model. Checkpoint zero is whether the model loads at all under Julia 1.11.9;
-  `save`/`load` are Julia `Serialization` and fragile across versions and struct changes. Then, in
-  order of cost: per-clause vote histogram, marginal satisfied-frequency per included literal, and
-  only then frequent-itemset mining over the satisfied masks. Bimodal near 0 and near `LF` means the
-  fuzziness is decorative; spread means it is load-bearing.
+- **satisfied-mask mining** — frequent-itemset mining over the recorded masks, turning
+  "core plus tail" into named sub-rules. Now justified by the spread measurement rather than
+  assumed. Extends `vote-histogram/`.
 
-- **`ceiling-divergence/`** — cheap, and shares a loaded model with the above. The FPTM paper caps a
-  clause's vote ceiling at its literal count; Tsetlin.jl uses `LF` flat. The two differ only for
-  clauses holding between 1 and `LF - 1` literals, so **count how many clauses are in that band**,
-  and at what point in training they leave it. The published IMDb configuration has `L` = `LF` = 64
-  at one clause per class, which puts a fully grown clause exactly at the boundary — so the gap is
-  predicted to be a training-time phenomenon that closes at convergence. That prediction is the
-  pass/fail criterion. If it holds, the flat form is a safe fast path and the paper's form matters
-  only for transient behaviour; if clauses sit below `LF` at convergence, the two implementations
-  are not reproducing the same model and every published number needs re-reading.
+- **message-symbol aliasing** — the residual from `aliasing/`. Cyclic-shift binding correlates
+  message codes, so the independence assumption fails and the existing result is optimistic there.
+  Needed before message passing, not before.
 
 ## Data
 
