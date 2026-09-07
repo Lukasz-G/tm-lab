@@ -1,0 +1,28 @@
+Precompiling TMBoolean...
+   1095.2 ms  ✓ TMBoolean
+  1 dependency successfully precompiled in 1 seconds
+====================================================================================
+How much accuracy lives in the booleanizer?
+====================================================================================
+MNIST, 40 clauses/class, T 10, L 10, LF 5, 20 epochs, 3 seeds
+
+train 60000, test 10000, 784 raw pixels
+
+encoder                      width     S    s     best accuracy (per seed)      mean
+------------------------------------------------------------------------------------
+fixed 1 bit  (0.25)            784   125    6    0.9714 0.9709 0.9714   0.9712
+fixed 4 bit  (0,.25,.5,.75)   3136   500    6    0.9736 0.9722 0.9743   0.9734
+thermo 2 bit (quantile)       1568   250    6    0.9747 0.9749 0.9734   0.9743
+thermo 4 bit (quantile)       3136   500    6    0.9728 0.9723 0.9729   0.9727
+fixed 4 bit, S NOT scaled     3136   125   25    0.9758 0.9756 0.9762   0.9759
+
+====================================================================================
+fixed 1 bit  (0.25)          +0.0000 vs the 1-bit baseline
+fixed 4 bit  (0,.25,.5,.75)  +0.0021 vs the 1-bit baseline
+thermo 2 bit (quantile)      +0.0031 vs the 1-bit baseline
+thermo 4 bit (quantile)      +0.0014 vs the 1-bit baseline
+fixed 4 bit, S NOT scaled    +0.0046 vs the 1-bit baseline
+
+encoder alone (1 -> 4 fixed bits, s held): +0.0021
+fitted vs assumed thresholds at 4 bits   : -0.0007
+cost of not rescaling S with width       : +0.0025

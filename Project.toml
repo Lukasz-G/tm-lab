@@ -6,9 +6,11 @@
 # records the paths, so a fresh clone resolves without a committed Manifest.
 
 [deps]
+TMBoolean = "b9de0909-3b07-4ee9-a204-7ecf5cc7d2be"
 TMCore = "7c11defa-ba63-4ea8-8215-c948064d4a9c"
 
 [sources]
+TMBoolean = {path = "packages/TMBoolean"}
 TMCore = {path = "packages/TMCore"}
 
 [compat]

@@ -29,6 +29,14 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
   queue because feedback currently discards that magnitude in 91.6% of firings. Literal
   satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
 
+- **[`booleanization/`](booleanization/)** — how much accuracy lives in the encoder? **On MNIST,
+  about +0.002 — and more than half of what a naive test would credit to it is a confound.** `s` is
+  derived as `width/S`, so widening 784 → 3136 bits quadruples the forgetting rate unless `S` is
+  scaled. Holding `s` fixed, four bits per pixel beats one by +0.0021; letting `s` drift adds
+  another +0.0025. Also: fitted thresholds do *not* beat upstream's hardcoded quartiles, and a
+  2-bit thermometer beats every 4-bit arm. The convolutional-kernel claim that motivated the track
+  is a much stronger intervention and remains untested.
+
 - **[`imdb-readability/`](imdb-readability/)** — do the extracted cores read as rules when literals
   are words? **No, and the reason is a ratio.** Reproduces the published IMDb number (0.9012 vs
   0.9015) at one clause per class, then finds cores of 3,375-4,127 literals: precise (0.979) and

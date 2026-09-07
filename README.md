@@ -115,7 +115,8 @@ Single-threaded inference runs at ~107,000 predictions/s on 784-bit MNIST with 4
 ## Layout
 
 ```
-packages/TMCore/     substrate: evaluator, typed feedback, model format, benchmark harness
+packages/TMCore/     substrate: evaluator, typed feedback, training, model format, measurement
+packages/TMBoolean/  booleanization encoders; depends on nothing, not even TMCore
 research/            experiments and measurement; scripts, not a package
 NOTICE.md            third-party attribution, and when a file needs an inline notice
 ```
@@ -143,7 +144,7 @@ so a fresh clone resolves without one.
 |---|---|---|
 | A | Substrate — evaluator, typed feedback, training, model format, harness | **done** |
 | B | Measurement — satisfied-mask recording, vote histograms, rule mining | first results in |
-| C | Booleanization — thermometer, convolutional-kernel, n-gram encoders | later |
+| C | Booleanization — `TMBoolean`, zero-dependency encoders | thermometer done and measured |
 | D | Algorithmic variants, tested on flat FPTM | after A |
 | E | Graph — per-node evaluation, message passing, depth | last |
 
