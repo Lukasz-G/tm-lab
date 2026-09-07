@@ -58,8 +58,12 @@ function arm(policy, epochs, seed)
     return (best=best, final=final, med=c[end÷2], max=c[end], interior=interior)
 end
 
+# Three arms, because "reinforce less often" and "erode more often" are different edits and the
+# obvious formulation makes both at once. ProportionalIdle withholds reinforcement without adding
+# erosion, so comparing the two says which half of the change is responsible for any difference.
 policies = (("threshold   [published]", ThresholdFeedback()),
-            ("proportional", ProportionalFeedback()))
+            ("proportional", ProportionalFeedback()),
+            ("proportional-idle", ProportionalIdle()))
 
 println("policy                    seed        best    final   literals med/max   interior")
 println("-"^78)
@@ -78,11 +82,18 @@ end
 println()
 println("="^78)
 base = results["threshold   [published]"]
-prop = results["proportional"]
-@printf("threshold    : mean %.4f  (min %.4f, max %.4f)\n", mean(base), minimum(base), maximum(base))
-@printf("proportional : mean %.4f  (min %.4f, max %.4f)\n", mean(prop), minimum(prop), maximum(prop))
-@printf("difference   : %+.4f\n", mean(prop) - mean(base))
+for name in ("threshold   [published]", "proportional", "proportional-idle")
+    a = results[name]
+    @printf("%-24s mean %.4f  (min %.4f, max %.4f)   %+.4f vs published\n",
+            name, mean(a), minimum(a), maximum(a), mean(a) - mean(base))
+end
+
+# The obvious formulation makes two edits at once. Splitting them says which one costs.
+prop, idle = results["proportional"], results["proportional-idle"]
 println()
-println(abs(mean(prop) - mean(base)) < 0.002 ?
-        "Within seed-to-seed noise: the discarded magnitude does not appear load-bearing here." :
-        mean(prop) > mean(base) ? "Proportional feedback helps." : "Proportional feedback hurts.")
+@printf("withholding reinforcement alone : %+.4f\n", mean(idle) - mean(base))
+@printf("adding erosion on top of it     : %+.4f\n", mean(prop) - mean(idle))
+println()
+println(mean(prop) > mean(base) || mean(idle) > mean(base) ?
+        "At least one proportional variant helps." :
+        "Both proportional variants hurt: the published threshold rule is the better choice here.")

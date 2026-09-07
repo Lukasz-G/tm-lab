@@ -28,8 +28,10 @@ budget_from_code(c::UInt8) = c == 0x00 ? GrowthGate() :
 # reloaded to continue training would silently switch rules without it.
 feedback_code(::ThresholdFeedback) = 0x00
 feedback_code(::ProportionalFeedback) = 0x01
+feedback_code(::ProportionalIdle) = 0x02
 feedback_from_code(c::UInt8) = c == 0x00 ? ThresholdFeedback() :
                                c == 0x01 ? ProportionalFeedback() :
+                               c == 0x02 ? ProportionalIdle() :
                                throw(ArgumentError("unknown feedback policy code $c"))
 
 class_code(::Type{<:Integer}) = 0x00

@@ -53,7 +53,7 @@ trained model rather than on a fixture.
 | 63 | 1 | uint8 | `class_type`: 0 = int64, 1 = utf8 string, 2 = bool |
 | 64 | 8 | uint64 | `payload_bytes` — length of the payload, for truncation detection |
 | 72 | 4 | uint32 | `class_block_bytes` |
-| 76 | 1 | uint8 | `feedback_policy`: 0 = threshold, 1 = proportional *(added in v2)* |
+| 76 | 1 | uint8 | `feedback_policy`: 0 = threshold, 1 = proportional, 2 = proportional-idle *(added in v2)* |
 | 77 | 3 | bytes | reserved, must be zero; readers must reject a non-zero value |
 | 80 | … | | class label block |
 

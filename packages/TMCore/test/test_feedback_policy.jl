@@ -1,30 +1,39 @@
 @testset "feedback policy branch selection" begin
     rng = MersenneTwister(31)
 
-    # The published rule ignores magnitude entirely: any nonzero vote reinforces.
+    # The published rule ignores magnitude entirely: any nonzero vote reinforces, zero erodes.
     for v in 1:5
-        @test reinforce_branch(ThresholdFeedback(), v, 5, rng)
+        @test type_i_action(ThresholdFeedback(), v, 5, rng) == FEEDBACK_REINFORCE
         @test reject_branch(ThresholdFeedback(), v, 5, rng)
     end
-    @test !reinforce_branch(ThresholdFeedback(), 0, 5, rng)
+    @test type_i_action(ThresholdFeedback(), 0, 5, rng) == FEEDBACK_ERODE
     @test !reject_branch(ThresholdFeedback(), 0, 5, rng)
 
-    # Proportional agrees at both ends — a zero vote never reinforces, a full match always does —
-    # so it is a strict generalisation rather than a different rule.
-    for pol in (ProportionalFeedback(),)
-        @test !reinforce_branch(pol, 0, 5, rng)
+    # Both proportional policies agree at the ends — a zero vote always erodes, a full match always
+    # reinforces — so each is a strict generalisation rather than a different rule.
+    for pol in (ProportionalFeedback(), ProportionalIdle())
+        @test type_i_action(pol, 0, 5, rng) == FEEDBACK_ERODE
         @test !reject_branch(pol, 0, 5, rng)
         for _ in 1:200
-            @test reinforce_branch(pol, 5, 5, rng)
-            @test reinforce_branch(pol, 7, 5, rng)      # vote above ceiling cannot happen, but is safe
+            @test type_i_action(pol, 5, 5, rng) == FEEDBACK_REINFORCE
+            @test type_i_action(pol, 7, 5, rng) == FEEDBACK_REINFORCE
             @test reject_branch(pol, 5, 5, rng)
         end
     end
 
-    # In between it fires at the stated rate. 4000 draws puts the standard error near 0.008.
-    for (v, ceil) in ((1, 5), (2, 5), (3, 5), (4, 5), (1, 2))
-        hits = count(_ -> reinforce_branch(ProportionalFeedback(), v, ceil, rng), 1:4000)
-        @test isapprox(hits / 4000, v / ceil; atol = 0.035)
+    # They differ only in what happens to a firing clause that loses the draw: eroded, or untouched.
+    # That distinction is the whole point of separating them.
+    seen_prop = Set(type_i_action(ProportionalFeedback(), 1, 5, rng) for _ in 1:2000)
+    seen_idle = Set(type_i_action(ProportionalIdle(), 1, 5, rng) for _ in 1:2000)
+    @test seen_prop == Set([FEEDBACK_REINFORCE, FEEDBACK_ERODE])
+    @test seen_idle == Set([FEEDBACK_REINFORCE, FEEDBACK_NONE])
+
+    # In between, both reinforce at the stated rate. 4000 draws puts the standard error near 0.008.
+    for pol in (ProportionalFeedback(), ProportionalIdle())
+        for (v, ceil) in ((1, 5), (2, 5), (3, 5), (4, 5), (1, 2))
+            hits = count(_ -> type_i_action(pol, v, ceil, rng) == FEEDBACK_REINFORCE, 1:4000)
+            @test isapprox(hits / 4000, v / ceil; atol = 0.035)
+        end
     end
 end
 
@@ -35,7 +44,7 @@ end
     Y = [v[1] & !v[3] for v in V]
     X = TMInput.(V)
 
-    for pol in (ThresholdFeedback(), ProportionalFeedback())
+    for pol in (ThresholdFeedback(), ProportionalFeedback(), ProportionalIdle())
         m = TMClassifier(Y, width; clauses_per_class = 16, T = 8, S = 10, L = 6, LF = 4,
                          feedback = pol)
         r = MersenneTwister(5)
@@ -53,7 +62,7 @@ end
     V = [rand(rng, Bool, 64) for _ in 1:200]
     Y = [v[1] for v in V]
     X = TMInput.(V)
-    for pol in (ThresholdFeedback(), ProportionalFeedback())
+    for pol in (ThresholdFeedback(), ProportionalFeedback(), ProportionalIdle())
         m = TMClassifier(Y, 64; clauses_per_class = 8, T = 6, S = 8, L = 5, LF = 3, feedback = pol)
         train!(m, X, Y; rng = rng)
         io = IOBuffer(); save_model(io, m)

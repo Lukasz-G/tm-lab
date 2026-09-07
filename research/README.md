@@ -29,6 +29,15 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
   queue because feedback currently discards that magnitude in 91.6% of firings. Literal
   satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
 
+- **[`proportional-feedback/`](proportional-feedback/)** — does using the clause vote's magnitude
+  at the feedback boundary help? **No — it hurts, consistently.** 0.9723 published rule vs 0.9686
+  and 0.9679 for the two proportional variants, with non-overlapping seed ranges. Isolating the two
+  edits: withholding reinforcement costs -0.0037, adding erosion a further -0.0007, so ~85% of the
+  damage is the withholding. It *sharpened* clauses as hoped (median 16 to 14, interior 0.92 to
+  0.89) and that is exactly what cost accuracy — unconditional reinforcement is how a clause
+  accumulates the redundant literals that let it degrade gracefully. The premise that motivated the
+  experiment is inverted: a large discarded signal is not automatically a wasted one.
+
 - **[`budget-paths/`](budget-paths/)** — which growth path does `L` need to gate? **Not Type II.**
   Adding a Type II cap to the reference policy and changing nothing else costs 13.4 accuracy points,
   against 5.7 for capping Type Ia, because Type II is how a clause learns to *reject* — block it and

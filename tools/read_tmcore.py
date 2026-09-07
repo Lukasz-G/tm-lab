@@ -18,7 +18,7 @@ VERSION = 2
 
 CEILING = {0: "literal-capped", 1: "flat-LF"}
 BUDGET = {0: "growth-gate", 1: "hard-cap"}
-FEEDBACK = {0: "threshold", 1: "proportional"}
+FEEDBACK = {0: "threshold", 1: "proportional", 2: "proportional-idle"}
 
 
 class Model:

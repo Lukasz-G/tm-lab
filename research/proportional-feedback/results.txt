@@ -1,0 +1,26 @@
+==============================================================================
+Vote-proportional feedback vs the published threshold rule
+==============================================================================
+MNIST, 40 clauses/class, T 10, S 125, L 10, LF 5, 30 epochs, 3 seeds
+
+policy                    seed        best    final   literals med/max   interior
+------------------------------------------------------------------------------
+threshold   [published]   20260907   0.9720   0.9714      16 /  46     0.920   (41 s)
+threshold   [published]         11   0.9724   0.9713      16 /  52     0.927   (37 s)
+threshold   [published]         12   0.9726   0.9726      16 /  54     0.927   (39 s)
+proportional              20260907   0.9675   0.9650      14 /  31     0.887   (44 s)
+proportional                    11   0.9681   0.9681      14 /  34     0.893   (42 s)
+proportional                    12   0.9681   0.9650      13 /  32     0.896   (30 s)
+proportional-idle         20260907   0.9685   0.9678      14 /  33     0.891   (31 s)
+proportional-idle               11   0.9686   0.9672      14 /  32     0.898   (27 s)
+proportional-idle               12   0.9687   0.9668      14 /  36     0.898   (27 s)
+
+==============================================================================
+threshold   [published]  mean 0.9723  (min 0.9720, max 0.9726)   +0.0000 vs published
+proportional             mean 0.9679  (min 0.9675, max 0.9681)   -0.0044 vs published
+proportional-idle        mean 0.9686  (min 0.9685, max 0.9687)   -0.0037 vs published
+
+withholding reinforcement alone : -0.0037
+adding erosion on top of it     : -0.0007
+
+Both proportional variants hurt: the published threshold rule is the better choice here.

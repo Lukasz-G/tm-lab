@@ -133,13 +133,14 @@ function update_class!(m::TMClassifier, ci::Integer, x::TMInput, positive::Bool,
         # The feedback policy decides how the vote's magnitude is used. Under the published rule it
         # is discarded and any nonzero vote reinforces; under a proportional rule a partial match
         # reinforces only in proportion to how well it matched.
-        if reinforce_branch(m.feedback, v, ceiling(m.ceiling, n, LF), rng)
+        act = type_i_action(m.feedback, v, ceiling(m.ceiling, n, LF), rng)
+        if act == FEEDBACK_REINFORCE
             feedback!(TypeIa(), typeI, j, x,
                       reinforce_allowed(m.budget, n, L),
                       promotion_room(m.budget, n, L, TypeIa()))
-        else
+        elseif act == FEEDBACK_ERODE
             feedback!(TypeIb(), typeI, j, s, rng)
-        end
+        end                                        # FEEDBACK_NONE: leave the clause untouched
     end
     @inbounds for j in 1:typeII.nclauses
         rand(rng) < update || continue
