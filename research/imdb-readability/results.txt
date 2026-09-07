@@ -1,0 +1,166 @@
+vocabulary: 12800 features
+documents: 25000 train, 25000 test
+
+================================================================================
+IMDb, 2 clauses/class, T 18, S 1000, L 64, LF 64, 30 epochs
+================================================================================
+epoch  1  test 0.7350  best 0.7350  (0 s)
+epoch  2  test 0.8520  best 0.8520  (1 s)
+epoch  3  test 0.8645  best 0.8645  (2 s)
+epoch  4  test 0.8830  best 0.8830  (2 s)
+epoch  5  test 0.8884  best 0.8884  (1 s)
+epoch  6  test 0.8920  best 0.8920  (1 s)
+epoch  7  test 0.8940  best 0.8940  (1 s)
+epoch  8  test 0.8955  best 0.8955  (1 s)
+epoch  9  test 0.8944  best 0.8955  (1 s)
+epoch 10  test 0.8927  best 0.8955  (1 s)
+epoch 11  test 0.8959  best 0.8959  (1 s)
+epoch 12  test 0.8962  best 0.8962  (1 s)
+epoch 13  test 0.8960  best 0.8962  (1 s)
+epoch 14  test 0.8973  best 0.8973  (1 s)
+epoch 15  test 0.8973  best 0.8973  (1 s)
+epoch 16  test 0.8990  best 0.8990  (1 s)
+epoch 17  test 0.8988  best 0.8990  (1 s)
+epoch 18  test 0.8980  best 0.8990  (1 s)
+epoch 19  test 0.8985  best 0.8990  (1 s)
+epoch 20  test 0.8989  best 0.8990  (1 s)
+epoch 21  test 0.9010  best 0.9010  (1 s)
+epoch 22  test 0.8997  best 0.9010  (1 s)
+epoch 23  test 0.8984  best 0.9010  (1 s)
+epoch 24  test 0.9007  best 0.9010  (1 s)
+epoch 25  test 0.8996  best 0.9010  (1 s)
+epoch 26  test 0.9008  best 0.9010  (1 s)
+epoch 27  test 0.9012  best 0.9012  (1 s)
+epoch 28  test 0.8990  best 0.9012  (1 s)
+epoch 29  test 0.8999  best 0.9012  (1 s)
+epoch 30  test 0.9011  best 0.9012  (1 s)
+
+best test accuracy 0.9012   (published 1-clause-per-class reference: 0.9015)
+
+================================================================================
+CLAUSE CORES, AS WORDS
+================================================================================
+
+--- NEGATIVE sentiment, for clause 1 ---
+    3718 included literals, fired on 20725 of 25000 test docs
+    core: 3649 literals, matches 555 docs, P(NEGATIVE sentiment) = 0.957  (base rate 0.500)
+    REQUIRES ABSENT:
+      "'n' roll"
+      "10 out"
+      "10 out of"
+      "10 out of 10"
+      "11th"
+      "18th"
+      "1958"
+      "2005"
+      "7"
+      "7 10"
+      "7 10 br"
+      "7 10 br br"
+      "7 5"
+      "7 5 10"
+      "7 out"
+      "7 out of"
+      "7 out of 10"
+      "8"
+      "8 10"
+      "8 10 br"
+      "8 10 br br"
+      "8 5 10"
+      "8 out"
+      "8 out of"
+      "8 out of 10"
+      ... and 3624 more
+
+--- NEGATIVE sentiment, against clause 1 ---
+    4191 included literals, fired on 19466 of 25000 test docs
+    core: 4127 literals, matches 741 docs, P(NEGATIVE sentiment) = 0.027  (base rate 0.500)
+    REQUIRES ABSENT:
+      "0"
+      "0 out"
+      "0 out of"
+      "0 out of 10"
+      "1"
+      "1 10"
+      "1 2"
+      "1 2 from"
+      "1 5"
+      "1 if"
+      "1 out"
+      "1 out of"
+      "1 out of 10"
+      "1 star"
+      "1 to"
+      "10 dir"
+      "10 minutes"
+      "10 minutes of"
+      "13th"
+      "15 minutes of"
+      "1st watched"
+      "2 10"
+      "2 because"
+      "2 from"
+      "2 hours of"
+      ... and 4102 more
+
+--- POSITIVE sentiment, for clause 1 ---
+    3843 included literals, fired on 19771 of 25000 test docs
+    core: 3780 literals, matches 950 docs, P(POSITIVE sentiment) = 0.979  (base rate 0.500)
+    REQUIRES ABSENT:
+      "0"
+      "0 10"
+      "0 out"
+      "0 out of"
+      "1"
+      "1 10"
+      "1 2"
+      "1 2 from"
+      "1 5"
+      "1 out"
+      "1 out of"
+      "1 out of 10"
+      "1 star"
+      "1 to"
+      "10 dir"
+      "10 minutes"
+      "15 minutes"
+      "1st watched"
+      "2 10"
+      "2 from"
+      "2 hours of"
+      "2 is"
+      "2 out"
+      "2 out of"
+      "2 seconds"
+      ... and 3755 more
+
+--- POSITIVE sentiment, against clause 1 ---
+    3452 included literals, fired on 20882 of 25000 test docs
+    core: 3375 literals, matches 536 docs, P(POSITIVE sentiment) = 0.047  (base rate 0.500)
+    REQUIRES ABSENT:
+      "'n' roll"
+      "10 10"
+      "10 out"
+      "10 out of"
+      "11"
+      "11th"
+      "18th"
+      "1958"
+      "7"
+      "7 10"
+      "7 10 br"
+      "7 10 br br"
+      "7 5"
+      "7 out"
+      "7 out of"
+      "7 out of 10"
+      "8"
+      "8 10"
+      "8 10 br br"
+      "8 5"
+      "8 5 10"
+      "8 out"
+      "8 out of"
+      "8 out of 10"
+      "9"
+      ... and 3350 more

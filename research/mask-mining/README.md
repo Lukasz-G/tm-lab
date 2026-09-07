@@ -90,7 +90,11 @@ redundant around.
 
 ## Caveats
 
-One model, one dataset. MNIST cores are pixel sets, so "readable" means checkable and low-entropy
-rather than semantically meaningful — the IMDb one-clause-per-class model, where literals are words,
-would be the honest test of human readability and has not been run. The 95% core threshold is a
+One model, one dataset — and the follow-up on IMDb ([`imdb-readability/`](../imdb-readability/))
+shows the result does **not** generalise. There the published model's clauses hold ~3,800 literals
+with `LF`=64, so they tolerate 1.7% of literals failing against 21% here, the core comes out at 98%
+of the clause, and extraction returns a 3,780-term conjunction. The operative quantity is
+`LF` / included-literals: this decomposition is informative when that ratio is large and vacuous
+when it is small. MNIST cores are also pixel sets, so "readable" here means checkable and
+low-entropy rather than semantically meaningful. The 95% core threshold is a
 choice; a sweep over it was not done, and the core/tail split would move with it.

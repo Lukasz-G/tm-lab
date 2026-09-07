@@ -29,6 +29,15 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
   queue because feedback currently discards that magnitude in 91.6% of firings. Literal
   satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
 
+- **[`imdb-readability/`](imdb-readability/)** — do the extracted cores read as rules when literals
+  are words? **No, and the reason is a ratio.** Reproduces the published IMDb number (0.9012 vs
+  0.9015) at one clause per class, then finds cores of 3,375-4,127 literals: precise (0.979) and
+  unreadable. The clause holds 3,843 literals with `LF`=64, so it tolerates 1.7% of them failing and
+  is already a near-strict conjunction — against 21% on MNIST, where the decomposition worked. So
+  **`LF` / included-literals is the diagnostic**: below a few percent there is no tail to separate.
+  Unplanned: **not one core requires a term to be present** — the model is a pure blacklist,
+  classifying by which n-grams are missing.
+
 - **[`mask-mining/`](mask-mining/)** — is a fuzzy clause recoverable as a rule? **Yes, and this is
   the first clearly positive result here.** Not "k rules plus a tail" as hypothesised — the median
   clause has 195 distinct satisfied masks and top-10 coverage of only 42% — but a **strict
