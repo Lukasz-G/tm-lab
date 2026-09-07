@@ -37,6 +37,8 @@ using Random: Random, randperm
 export TMInput,
        ClauseBank, clause_vote, clause_vote!, bank_vote, refresh_counts!, trainable,
        CeilingPolicy, LiteralCapped, FlatLF, ceiling,
+       MissCostPolicy, UniformMissCost, ConfidenceWeightedMissCost, miss_cost,
+       calibrate_misscost!, confidence_threshold,
        LiteralBudgetPolicy, GrowthGate, HardCap, reinforce_allowed, promotion_room,
        FeedbackRule, TypeIa, TypeIb, TypeII, feedback!,
        FeedbackPolicy, ThresholdFeedback, ProportionalFeedback, ProportionalIdle,
@@ -51,7 +53,9 @@ export TMInput,
 
 include("input.jl")
 include("ceiling.jl")
+include("misscost_fwd.jl")
 include("clauses.jl")
+include("misscost.jl")
 include("feedback.jl")
 include("feedback_policy.jl")
 include("budget.jl")

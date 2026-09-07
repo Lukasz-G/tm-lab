@@ -1,0 +1,30 @@
+Precompiling TMCore...
+   1276.2 ms  ✓ TMCore
+  1 dependency successfully precompiled in 1 seconds
+==============================================================================
+Confidence-weighted miss cost vs the published uniform cost
+==============================================================================
+MNIST, 40 clauses/class, T 10, S 125, L 10, LF 5, 30 epochs, 5 seeds
+
+policy                          seed      best   incl-state min/med/max   threshold
+------------------------------------------------------------------------------
+uniform  [published]           20260907  0.9720      128 /128 /140           0   (22 s)
+uniform  [published]                 11  0.9724      128 /128 /143           0   (20 s)
+uniform  [published]                 12  0.9726      128 /128 /139           0   (20 s)
+uniform  [published]                 13  0.9726      128 /128 /136           0   (20 s)
+uniform  [published]                 14  0.9724      128 /128 /154           0   (20 s)
+weighted, nominal midpoint     20260907  0.9720      128 /128 /140         191   (143 s)
+weighted, nominal midpoint           11  0.9724      128 /128 /143         191   (157 s)
+weighted, nominal midpoint           12  0.9726      128 /128 /139         191   (165 s)
+weighted, nominal midpoint           13  0.9726      128 /128 /136         191   (168 s)
+weighted, nominal midpoint           14  0.9724      128 /128 /154         191   (148 s)
+weighted, calibrated median    20260907  0.9701      128 /128 /168         128   (122 s)
+weighted, calibrated median          11  0.9700      128 /128 /162         128   (131 s)
+weighted, calibrated median          12  0.9704      128 /128 /154         128   (126 s)
+weighted, calibrated median          13  0.9687      128 /128 /150         128   (126 s)
+weighted, calibrated median          14  0.9690      128 /128 /163         128   (130 s)
+
+==============================================================================
+uniform  [published]           mean 0.9724   +0.0000 vs published   worse on 0/5 seeds
+weighted, nominal midpoint     mean 0.9724   +0.0000 vs published   worse on 0/5 seeds
+weighted, calibrated median    mean 0.9696   -0.0028 vs published   worse on 5/5 seeds

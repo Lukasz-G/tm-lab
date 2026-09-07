@@ -23,7 +23,7 @@ binding are all decisions the literature disagrees about or leaves open, and all
 by dispatch rather than by a branch or a rewrite.
 """
 mutable struct TMClassifier{ClassType,S<:Unsigned,B<:ClassBinding,C<:CeilingPolicy,
-                            P<:LiteralBudgetPolicy,F<:FeedbackPolicy}
+                            P<:LiteralBudgetPolicy,F<:FeedbackPolicy,M<:MissCostPolicy}
     const params::Hyperparameters
     const classes::Vector{ClassType}
     const positive::Vector{ClauseBank{S}}
@@ -32,6 +32,7 @@ mutable struct TMClassifier{ClassType,S<:Unsigned,B<:ClassBinding,C<:CeilingPoli
     const budget::P
     const binding::B
     const feedback::F
+    misscost::M            # not const: calibrate_misscost! replaces it
 end
 
 """
@@ -47,15 +48,17 @@ function TMClassifier(classes::AbstractVector{ClassType}, width::Integer;
                       ceiling::CeilingPolicy=LiteralCapped(),
                       budget::LiteralBudgetPolicy=GrowthGate(),
                       binding::ClassBinding=OneVsRest(),
-                      feedback::FeedbackPolicy=ThresholdFeedback()) where {ClassType,ST<:Unsigned}
+                      feedback::FeedbackPolicy=ThresholdFeedback(),
+                      misscost::MissCostPolicy=UniformMissCost()) where {ClassType,ST<:Unsigned}
     params = Hyperparameters(T=T, S=S, L=L, LF=LF, width=width)
     cls = collect(sort(unique(classes)))
     length(cls) >= 2 || throw(ArgumentError("need at least two classes, got $(length(cls))"))
     half = clauses_per_class ÷ 2
     half >= 1 || throw(ArgumentError("clauses_per_class must be at least 2, got $clauses_per_class"))
     mk() = [ClauseBank{ST}(width, half; states=states, include_limit=include_limit) for _ in cls]
-    return TMClassifier{ClassType,ST,typeof(binding),typeof(ceiling),typeof(budget),typeof(feedback)}(
-        params, cls, mk(), mk(), ceiling, budget, binding, feedback)
+    return TMClassifier{ClassType,ST,typeof(binding),typeof(ceiling),typeof(budget),
+                        typeof(feedback),typeof(misscost)}(
+        params, cls, mk(), mk(), ceiling, budget, binding, feedback, misscost)
 end
 
 nclasses(m::TMClassifier) = length(m.classes)
@@ -67,8 +70,8 @@ Summed clause votes for class index `ci`.
 """
 @inline function vote(m::TMClassifier, ci::Integer, x::TMInput)
     LF = m.params.LF
-    return (bank_vote(m.positive[ci], x, LF, m.ceiling),
-            bank_vote(m.negative[ci], x, LF, m.ceiling))
+    return (bank_vote(m.positive[ci], x, LF, m.ceiling, m.misscost),
+            bank_vote(m.negative[ci], x, LF, m.ceiling, m.misscost))
 end
 
 """
@@ -129,7 +132,7 @@ function update_class!(m::TMClassifier, ci::Integer, x::TMInput, positive::Bool,
     @inbounds for j in 1:typeI.nclauses
         rand(rng) < update || continue
         n = Int(typeI.count[j])
-        v = clause_vote(typeI, j, x, LF, m.ceiling)
+        v = clause_vote(typeI, j, x, LF, m.ceiling, m.misscost)
         # The feedback policy decides how the vote's magnitude is used. Under the published rule it
         # is discarded and any nonzero vote reinforces; under a proportional rule a partial match
         # reinforces only in proportion to how well it matched.
@@ -145,7 +148,7 @@ function update_class!(m::TMClassifier, ci::Integer, x::TMInput, positive::Bool,
     @inbounds for j in 1:typeII.nclauses
         rand(rng) < update || continue
         n = Int(typeII.count[j])
-        v = clause_vote(typeII, j, x, LF, m.ceiling)
+        v = clause_vote(typeII, j, x, LF, m.ceiling, m.misscost)
         if reject_branch(m.feedback, v, ceiling(m.ceiling, n, LF), rng)
             # Unrestricted under GrowthGate, which is what both references do; real headroom under
             # HardCap, since Type II grows clauses too and a cap that ignores it is not a cap.
@@ -201,4 +204,33 @@ function literal_counts(m::TMClassifier)
         append!(out, Int.(b.count))
     end
     return out
+end
+
+"""
+    calibrate_misscost!(model) -> model
+
+Set the model's confidence threshold to the **median state of its included automata**, so that the
+policy splits the distribution it actually has rather than the one the state range nominally allows.
+
+Without this the policy is usually a no-op: reference training leaves included automata bunched just
+above `include_limit`, far below the nominal midpoint. With it, roughly half of included literals
+count as confident by construction, which is what makes the comparison against uniform cost a test
+of the idea rather than of a threshold guess.
+
+Call it after training, and again whenever training continues — the distribution moves.
+"""
+function calibrate_misscost!(m::TMClassifier)
+    states = UInt16[]
+    for banks in (m.positive, m.negative), b in banks
+        b.state === nothing && continue
+        st, sti, il = b.state, b.state_inv, b.include_limit
+        for j in 1:b.nclauses, i in 1:b.width
+            st[i, j] >= il && push!(states, UInt16(st[i, j]))
+            sti[i, j] >= il && push!(states, UInt16(sti[i, j]))
+        end
+    end
+    isempty(states) && return m
+    sort!(states)
+    m.misscost = ConfidenceWeightedMissCost(states[max(1, length(states) ÷ 2)])
+    return m
 end

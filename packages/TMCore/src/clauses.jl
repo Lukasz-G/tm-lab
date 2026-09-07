@@ -140,13 +140,10 @@ end
 Fuzzy vote of clause `j` on example `x`: the ceiling less one per failed literal, clipped at zero.
 """
 @inline function clause_vote(b::ClauseBank, j::Integer, x::TMInput, LF::Integer,
-                             policy::CeilingPolicy=LiteralCapped())
+                             policy::CeilingPolicy=LiteralCapped(),
+                             cost::MissCostPolicy=UniformMissCost())
     @boundscheck (1 <= j <= b.nclauses && x.len == b.width) || throw(BoundsError(b, j))
-    inc, inv, ch = b.included, b.included_inv, x.chunks
-    misses = 0
-    @inbounds @simd for n in 1:b.nchunks
-        misses += count_ones(miss_mask(inc[n, j], inv[n, j], ch[n]))
-    end
+    misses = miss_cost(cost, b, j, x)
     return max(0, ceiling(policy, Int(@inbounds b.count[j]), Int(LF)) - misses)
 end
 
@@ -182,10 +179,11 @@ end
 
 Summed vote of every clause in the bank.
 """
-function bank_vote(b::ClauseBank, x::TMInput, LF::Integer, policy::CeilingPolicy=LiteralCapped())
+function bank_vote(b::ClauseBank, x::TMInput, LF::Integer, policy::CeilingPolicy=LiteralCapped(),
+                   cost::MissCostPolicy=UniformMissCost())
     total = 0
     @inbounds for j in 1:b.nclauses
-        total += clause_vote(b, j, x, LF, policy)
+        total += clause_vote(b, j, x, LF, policy, cost)
     end
     return total
 end

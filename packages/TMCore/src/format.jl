@@ -9,7 +9,7 @@
 # upstream renaming its central struct in 2026 invalidated every model saved before it.
 
 const FORMAT_MAGIC = b"TMCORE\0\0"
-const FORMAT_VERSION = UInt32(2)
+const FORMAT_VERSION = UInt32(3)
 const HEADER_FIXED_BYTES = 80
 
 ceiling_code(::LiteralCapped) = 0x00
@@ -33,6 +33,17 @@ feedback_from_code(c::UInt8) = c == 0x00 ? ThresholdFeedback() :
                                c == 0x01 ? ProportionalFeedback() :
                                c == 0x02 ? ProportionalIdle() :
                                throw(ArgumentError("unknown feedback policy code $c"))
+
+# Version 3. Unlike the feedback policy this one changes *inference*: the same clauses score
+# differently under it, so a reader that ignored it would produce wrong predictions silently.
+misscost_code(::UniformMissCost) = 0x00
+misscost_code(::ConfidenceWeightedMissCost) = 0x01
+misscost_threshold(p::ConfidenceWeightedMissCost) = p.threshold
+misscost_threshold(::MissCostPolicy) = UInt16(0)
+misscost_from_code(c::UInt8, thr::UInt16) =
+    c == 0x00 ? UniformMissCost() :
+    c == 0x01 ? ConfidenceWeightedMissCost(thr) :
+    throw(ArgumentError("unknown miss-cost policy code $c"))
 
 class_code(::Type{<:Integer}) = 0x00
 class_code(::Type{String}) = 0x01
@@ -116,7 +127,8 @@ function save_model(io::IO, m::TMClassifier{ClassType}; include_states::Bool=tru
     write(io, UInt64(length(body)))
     write(io, UInt32(length(classblock)))
     write(io, feedback_code(m.feedback))
-    write(io, zeros(UInt8, 3))                     # reserved, must be zero
+    write(io, misscost_code(m.misscost))
+    write(io, misscost_threshold(m.misscost))      # uint16; 0 means the nominal band midpoint
     write(io, classblock)
     write(io, body)
     return nothing
@@ -148,8 +160,8 @@ function load_model(io::IO)
     payload_bytes = read(io, UInt64)
     classblock_bytes = read(io, UInt32)
     feedback = feedback_from_code(read(io, UInt8))
-    reserved = read(io, 3)
-    all(iszero, reserved) || throw(ArgumentError("reserved header bytes are not zero"))
+    mc_code = read(io, UInt8)
+    misscost = misscost_from_code(mc_code, read(io, UInt16))
     classes = _read_class_block(io, nclasses, ctype)
 
     # The header is self-checking: three independently derivable quantities must agree, so a
@@ -199,8 +211,9 @@ function load_model(io::IO)
 
     params = Hyperparameters(T=Int(T), S=Int(S), L=Int(L), LF=Int(LF), width=Int(width))
     CT = eltype(classes)
-    return TMClassifier{CT,ST,OneVsRest,typeof(ceiling),typeof(budget),typeof(feedback)}(
-        params, classes, pos, neg, ceiling, budget, OneVsRest(), feedback)
+    return TMClassifier{CT,ST,OneVsRest,typeof(ceiling),typeof(budget),typeof(feedback),
+                        typeof(misscost)}(
+        params, classes, pos, neg, ceiling, budget, OneVsRest(), feedback, misscost)
 end
 
 load_model(path::AbstractString) = open(load_model, path, "r")

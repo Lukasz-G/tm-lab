@@ -1,4 +1,4 @@
-# TMCore model format, version 2
+# TMCore model format, version 3
 
 A container for a trained Fuzzy-Pattern Tsetlin Machine. Deliberately boring: a fixed binary header
 followed by raw packed arrays, little-endian throughout, no self-describing schema and no
@@ -34,7 +34,7 @@ trained model rather than on a fixture.
 | Offset | Size | Type | Field |
 |---|---|---|---|
 | 0 | 8 | bytes | magic, ASCII `TMCORE\0\0` |
-| 8 | 4 | uint32 | `version` (currently 2) |
+| 8 | 4 | uint32 | `version` (currently 3) |
 | 12 | 4 | uint32 | `header_size` — byte offset where the payload begins |
 | 16 | 4 | uint32 | `width` — input bits |
 | 20 | 4 | uint32 | `nchunks` — `ceil(width / 64)` |
@@ -54,14 +54,20 @@ trained model rather than on a fixture.
 | 64 | 8 | uint64 | `payload_bytes` — length of the payload, for truncation detection |
 | 72 | 4 | uint32 | `class_block_bytes` |
 | 76 | 1 | uint8 | `feedback_policy`: 0 = threshold, 1 = proportional, 2 = proportional-idle *(added in v2)* |
-| 77 | 3 | bytes | reserved, must be zero; readers must reject a non-zero value |
+| 77 | 1 | uint8 | `misscost_policy`: 0 = uniform, 1 = confidence-weighted *(added in v3)* |
+| 78 | 2 | bytes | reserved, must be zero; readers must reject a non-zero value |
 | 80 | … | | class label block |
 
 `header_size` = 80 + `class_block_bytes`, and the payload begins there.
 
-`feedback_policy` affects training only and never inference, so a v1 model's predictions are
-unambiguous without it. It is recorded because a checkpoint reloaded to continue training would
-otherwise switch feedback rules silently.
+`feedback_policy` affects training only and never inference, so predictions are unambiguous without
+it. It is recorded because a checkpoint reloaded to continue training would otherwise switch rules
+silently.
+
+`misscost_policy` is different: it changes **inference**. The same clauses score differently under
+it, so a reader that ignored the field would produce wrong predictions with no sign of trouble.
+Confidence-weighted scoring also requires the automata, so it is invalid together with
+`state_bytes` = 0.
 
 ### Class label block
 
@@ -99,6 +105,9 @@ misses(clause j, input x) = sum over chunks n of
 
 ceiling = literal-capped ? (count[j] == 0 ? LF : min(count[j], LF)) : LF
 vote    = max(0, ceiling - misses)
+
+Under confidence-weighted miss cost, `misses` is not a popcount: each failed literal contributes 2
+if its automaton is at or above include_limit + (state_max - include_limit) / 2, and 1 otherwise.
 ```
 
 Class score is the summed vote of its positive clauses minus that of its negative clauses, and the
@@ -112,6 +121,9 @@ the end, and `header_size` means an older reader can still find the payload.
 
 **Changes**
 
+- **v3** — added `misscost_policy` at offset 77, taking one of the reserved bytes. Unlike v2's
+  addition this one changes inference, so a reader that skipped it would be silently wrong rather
+  than merely unable to resume training.
 - **v2** — added `feedback_policy` at offset 76 and three reserved bytes, moving the class label
   block from 76 to 80. A v1 reader misparses a v2 file, which is exactly why the version is bumped
   rather than the byte quietly appended.

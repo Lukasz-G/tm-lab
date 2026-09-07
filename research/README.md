@@ -29,6 +29,14 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
   queue because feedback currently discards that magnitude in 91.6% of firings. Literal
   satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
 
+- **[`misscost/`](misscost/)** — does charging a failed literal by its automaton's confidence help?
+  **No, and the premise is false.** Included automata sit at median 128 of a possible 255 — exactly
+  the include threshold — because the growth gate freezes reinforcement almost immediately, so the
+  confidence gradient the idea wanted to exploit barely exists. The nominal threshold is never
+  reached and silently becomes a no-op; the calibrated one lands on the include floor, making the
+  policy "halve `LF`" in disguise, which costs 0.28 points on 5/5 seeds. Also ~7x slower and
+  unusable on inference-only models.
+
 - **[`proportional-feedback/`](proportional-feedback/)** — does using the clause vote's magnitude
   at the feedback boundary help? **No — it hurts on 10 of 10 seeds.** 0.9724 published rule vs
   0.9684 and 0.9682 for the two proportional variants, at roughly 20 standard errors. Isolating the

@@ -82,7 +82,47 @@ end
 
 py = Sys.iswindows() ? "python" : "python3"
 ok = success(run(ignorestatus(`$py $(joinpath(@__DIR__, "compare.py")) $full $cases`)))
+
+# The confidence-weighted miss cost changes *inference*, so a reader that ignored the field would be
+# silently wrong rather than merely unable to resume training. That makes it the path most worth
+# checking across languages, and it exercises per-automaton lookup rather than a plain popcount.
 println()
-println(ok && same && lean_same ?
+println("--- confidence-weighted miss cost ---")
+mw = TMClassifier(Ytr, 784; clauses_per_class=40, T=10, S=125, L=10, LF=5,
+                  misscost=ConfidenceWeightedMissCost())
+rngw = MersenneTwister(3)
+for _ in 1:3
+    train!(mw, Xtr, Ytr; rng=rngw)
+end
+@printf("trained: test accuracy %.4f
+", accuracy(predict(mw, Xte), Yte))
+fullw = joinpath(OUT, "model_weighted.tmc")
+save_model(fullw, mw)
+casesw = joinpath(OUT, "cases_weighted.txt")
+open(casesw, "w") do io
+    for k in 1:NCASES
+        x = Xte[k]
+        print(io, join(x[i] ? '1' : '0' for i in 1:784))
+        print(io, " ", predict(mw, x))
+        for ci in 1:length(mw.classes)
+            print(io, " ", score(mw, ci, x))
+        end
+        println(io)
+    end
+end
+okw = success(run(ignorestatus(`$py $(joinpath(@__DIR__, "compare.py")) $fullw $casesw`)))
+
+# Scoring without automata is impossible under this policy and must fail loudly, not quietly.
+leanw = joinpath(OUT, "model_weighted_lean.tmc")
+save_model(leanw, mw; include_states=false)
+refused = try
+    predict(load_model(leanw), Xte[1]); false
+catch e
+    e isa ArgumentError
+end
+@printf("inference-only + weighted scoring refused: %s
+", refused)
+println()
+println(ok && okw && refused && same && lean_same ?
         "PASS - an independent reader written against the spec recovers the same model." :
         "FAIL")

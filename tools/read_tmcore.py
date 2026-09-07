@@ -1,4 +1,4 @@
-"""Reference reader for the TMCore model format, version 2.
+"""Reference reader for the TMCore model format, version 3.
 
 Pure standard library, no NumPy, no Julia. If this file is hard to follow, the format is wrong —
 its entire purpose is that another implementation can adopt it without adopting us.
@@ -14,11 +14,12 @@ import struct
 import sys
 
 MAGIC = b"TMCORE\0\0"
-VERSION = 2
+VERSION = 3
 
 CEILING = {0: "literal-capped", 1: "flat-LF"}
 BUDGET = {0: "growth-gate", 1: "hard-cap"}
 FEEDBACK = {0: "threshold", 1: "proportional", 2: "proportional-idle"}
+MISSCOST = {0: "uniform", 1: "confidence-weighted"}
 
 
 class Model:
@@ -46,11 +47,24 @@ class Model:
     def clause_vote(self, class_index, polarity, j, chunks):
         """Fuzzy vote of one clause on a packed input, straight from the spec."""
         bank = self.banks[class_index][polarity]
+        weighted = self.misscost == 1
+        if weighted and self.state_bytes == 0:
+            raise ValueError("confidence-weighted scoring needs automata, which this file omits")
+        mid = self.include_limit + (self.state_max - self.include_limit) // 2
         misses = 0
         for n in range(self.nchunks):
             inc, invm = bank["included"][j][n], bank["included_inv"][j][n]
             val = (((inc ^ invm) & chunks[n]) ^ inc) & 0xFFFFFFFFFFFFFFFF
-            misses += bin(val).count("1")
+            if not weighted:
+                misses += bin(val).count("1")
+                continue
+            while val:
+                b = (val & -val).bit_length() - 1
+                i = n * 64 + b
+                confident = ((inc >> b & 1 and bank["state"][j][i] >= mid) or
+                             (invm >> b & 1 and bank["state_inv"][j][i] >= mid))
+                misses += 2 if confident else 1
+                val &= val - 1
         count = bank["count"][j]
         if self.ceiling == 0:                      # literal-capped
             ceiling = self.LF if count == 0 else min(count, self.LF)
@@ -95,7 +109,8 @@ def load(path):
     payload_bytes = struct.unpack_from("<Q", buf, 64)[0]
     class_block_bytes = _u32(buf, 72)
     feedback = buf[76]
-    if any(buf[77:80]):
+    misscost = buf[77]
+    if any(buf[78:80]):
         raise ValueError("reserved header bytes are not zero")
 
     off = 80
@@ -151,7 +166,8 @@ def load(path):
     return Model(width=width, nchunks=nchunks, nclasses=nclasses, nclauses=nclauses,
                  T=T, S=S, L=L, LF=LF, include_limit=include_limit,
                  state_min=state_min, state_max=state_max,
-                 ceiling=ceiling, budget=budget, feedback=feedback, state_bytes=state_bytes,
+                 ceiling=ceiling, budget=budget, feedback=feedback, misscost=misscost,
+                 state_bytes=state_bytes,
                  classes=classes, banks=banks)
 
 
@@ -164,9 +180,9 @@ def main(argv):
     print("  width %d bits (%d chunks), %d classes, %d clauses per polarity"
           % (m.width, m.nchunks, m.nclasses, m.nclauses))
     print("  T %d  S %d  L %d  LF %d" % (m.T, m.S, m.L, m.LF))
-    print("  ceiling %s, budget %s, feedback %s, automata %s"
+    print("  ceiling %s, budget %s, feedback %s, miss-cost %s, automata %s"
           % (CEILING.get(m.ceiling, "?"), BUDGET.get(m.budget, "?"),
-             FEEDBACK.get(m.feedback, "?"),
+             FEEDBACK.get(m.feedback, "?"), MISSCOST.get(m.misscost, "?"),
              "absent" if m.state_bytes == 0 else "%d-bit" % (m.state_bytes * 8)))
     print("  classes: %s" % (m.classes,))
     counts = [c for cls in m.banks for pol in cls for c in pol["count"]]
