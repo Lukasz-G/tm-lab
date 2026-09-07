@@ -33,6 +33,12 @@ module TMCore
 #     input. It reads as "no signal" rather than "broken". `LF == 1` is the strict TM.
 #   * `S` scales with input width — upstream derives a literal-decrement count as `length(x) / S`,
 #     so a value tuned at one feature count does not transfer to another. Warn on transfer.
+#   * When fuzzy semantics run over hypervector-encoded symbols, compute the alias count from
+#     (D, H, V) at construction and refuse or warn when it is not negligible. At H <= 2 a clause
+#     one bit short of a full match aliases to whole other symbols, and the fuzziness means nothing;
+#     at H >= 4 it is harmless. This guard is what the evaluator gets *instead* of a match-granularity
+#     parameter — see research/aliasing/ for the arithmetic and why symbol granularity is the coarser
+#     of the two rather than the safer.
 #
 # Files that transfer Tsetlin.jl's packed layout or inner loop must carry its MIT notice inline.
 # See NOTICE.md.

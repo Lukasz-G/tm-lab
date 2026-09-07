@@ -8,14 +8,16 @@ Each experiment gets a directory with its own `Project.toml` and a `README.md` s
 the pass/fail criterion **decided in advance**, and the answer once it has one. A negative result is
 written up here, not deleted.
 
-## Queued
+## Answered
 
-- **`aliasing/`** — closed-form expected spurious-match count for a symbol missing one bit, over
-  vocabulary `V`, hypervector bits `H`, dimension `D`. Arithmetic, roughly an hour, no model
-  training. Decides whether fuzziness has to operate at symbol granularity rather than bit
-  granularity, and therefore what the evaluator is parameterized over. Follow with a 5-10 symbol
-  toy only if the arithmetic does not already settle it. Pass/fail stated in advance: bit-granular
-  matching degrades toward chance as `V` grows at fixed `H`, while symbol-granular tracks strict.
+- **`aliasing/`** — bit- versus symbol-granular fuzziness over a sparse distributed code. The
+  criterion passes at `H` <= 2 and fails at `H` >= 4, so `H` is the lever rather than the
+  granularity; and symbol granularity turns out to be the coarser of the two, buying
+  interpretability rather than correctness. Track A takes a construction-time `(D, H, V)` guard
+  instead of a granularity parameter. Open residual: message symbols, whose codes are cyclic shifts
+  rather than independent draws.
+
+## Queued
 
 - **`vote-histogram/`** — run against upstream Tsetlin.jl and Hnilov's published IMDb
   one-clause-per-class model. Checkpoint zero is whether the model loads at all under Julia 1.11.9;
