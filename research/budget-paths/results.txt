@@ -1,0 +1,21 @@
+Precompiling TMCore...
+   1537.2 ms  ✓ TMCore
+  1 dependency successfully precompiled in 2 seconds
+==============================================================================
+Which growth path does L need to gate?
+==============================================================================
+MNIST, 40 clauses/class, T 10, S 125, L 10, LF 5, 30 epochs
+
+policy                             best acc   literals median   max
+------------------------------------------------------------------------------
+GrowthGate  [reference]             0.9720           16      46   (40 s)
+CapBoth                             0.5616           10      10   (734 s)
+CapTypeIa   [refs' check point]     0.9148           20      71   (51 s)
+CapTypeII   [refs never check]      0.4161          593     774   (85 s)
+GateThenCapII [clean isolation]     0.8381           14     305   (214 s)
+
+==============================================================================
+CapBoth                             -0.4104 vs reference
+CapTypeIa   [refs' check point]     -0.0572 vs reference
+CapTypeII   [refs never check]      -0.5559 vs reference
+GateThenCapII [clean isolation]     -0.1339 vs reference

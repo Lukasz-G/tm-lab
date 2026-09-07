@@ -29,6 +29,13 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
   queue because feedback currently discards that magnitude in 91.6% of firings. Literal
   satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
 
+- **[`budget-paths/`](budget-paths/)** — which growth path does `L` need to gate? **Not Type II.**
+  Adding a Type II cap to the reference policy and changing nothing else costs 13.4 accuracy points,
+  against 5.7 for capping Type Ia, because Type II is how a clause learns to *reject* — block it and
+  clauses grow without bound (max size 46 → 305 → 774). So `L` is a brake on reinforcement growth,
+  the references are right never to check it in Type II, and what is wrong is the name: `L` is
+  documented as a maximum clause size, is not one, and cannot be made one cheaply.
+
 - **[`format-crosscheck/`](format-crosscheck/)** — is the model format actually a format? A model
   trained in Julia is read back by `tools/read_tmcore.py`, a pure-standard-library Python reader
   written against the spec rather than against the writer, which reproduces **every per-class score

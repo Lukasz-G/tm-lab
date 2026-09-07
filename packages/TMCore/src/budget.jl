@@ -49,11 +49,20 @@ and measuring it says the references are right to do what they do.
 0.78-0.81 against a 0.75 majority-class baseline. Enforcing `L` as documented does not merely cost
 accuracy; it comes close to preventing learning.
 
-**Caveat on that number.** `HardCap` here rations promotions on *both* growth paths, Type Ia and
-Type II, because a cap that ignores one of them is not a cap. The references gate neither by `L` in
-Type II. So the measured gap confounds two changes — capping Type Ia growth, and capping Type II
-growth — and does not by itself say which dominates. Separating them is a one-parameter experiment
-and worth doing before drawing a conclusion about `L`'s intended meaning.
+**Separated, and it is the rejection path that matters.** `HardCap` rations both growth paths,
+because a cap that ignores one of them is not a cap. Isolating them on MNIST
+(`research/budget-paths/`): adding a Type II cap to the reference policy and changing nothing else
+costs **13.4 points**, while capping Type Ia instead costs 5.7.
+
+The mechanism is not subtle. Type II exists to add literals until a clause stops matching
+wrong-class examples. Cap it and clauses can never learn to reject, so they keep firing on the wrong
+class, keep drawing Type Ia, and grow without bound — maximum clause size rises from 46 literals to
+305, and to 774 when Type Ia is unrestrained too.
+
+So `L` is a brake on **reinforcement** growth, and gating rejection by it is actively harmful rather
+than merely unnecessary. The references are right not to check it there. What is wrong is the name
+and the documentation: `L` is described as a maximum clause size, is not one, and cannot be made one
+without a double-digit accuracy loss.
 """
 struct HardCap <: LiteralBudgetPolicy end
 
