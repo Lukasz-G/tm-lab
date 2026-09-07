@@ -1,0 +1,24 @@
+# Claude Code — local only, never committed
+.claude/
+CLAUDE.md
+
+# Julia
+Manifest.toml
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+/docs/build/
+/docs/site/
+
+# Benchmark data and trained models — never committed, they are large and
+# externally sourced. See research/README.md for where they are expected to live.
+/data/
+/models/
+*.tm
+*.jls
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

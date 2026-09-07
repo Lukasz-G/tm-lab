@@ -1,0 +1,15 @@
+# Development environment for the tm-lab monorepo.
+#
+#   julia --project=.
+#
+# gives you every package under packages/ at its working-tree state. `[sources]` (Julia 1.11+)
+# records the paths, so a fresh clone resolves without a committed Manifest.
+
+[deps]
+TMCore = "7c11defa-ba63-4ea8-8215-c948064d4a9c"
+
+[sources]
+TMCore = {path = "packages/TMCore"}
+
+[compat]
+julia = "1.11"

@@ -1,0 +1,13 @@
+name = "TMCore"
+uuid = "7c11defa-ba63-4ea8-8215-c948064d4a9c"
+authors = ["Lukasz Gagala <lukaszgagala@wp.pl>"]
+version = "0.0.1"
+
+[compat]
+julia = "1.11"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
