@@ -22,7 +22,8 @@ The three policy type parameters are the point of this type: ceiling, literal bu
 binding are all decisions the literature disagrees about or leaves open, and all three are settled
 by dispatch rather than by a branch or a rewrite.
 """
-mutable struct TMClassifier{ClassType,S<:Unsigned,B<:ClassBinding,C<:CeilingPolicy,P<:LiteralBudgetPolicy}
+mutable struct TMClassifier{ClassType,S<:Unsigned,B<:ClassBinding,C<:CeilingPolicy,
+                            P<:LiteralBudgetPolicy,F<:FeedbackPolicy}
     const params::Hyperparameters
     const classes::Vector{ClassType}
     const positive::Vector{ClauseBank{S}}
@@ -30,6 +31,7 @@ mutable struct TMClassifier{ClassType,S<:Unsigned,B<:ClassBinding,C<:CeilingPoli
     const ceiling::C
     const budget::P
     const binding::B
+    const feedback::F
 end
 
 """
@@ -44,15 +46,16 @@ function TMClassifier(classes::AbstractVector{ClassType}, width::Integer;
                       state_type::Type{ST}=UInt8,
                       ceiling::CeilingPolicy=LiteralCapped(),
                       budget::LiteralBudgetPolicy=GrowthGate(),
-                      binding::ClassBinding=OneVsRest()) where {ClassType,ST<:Unsigned}
+                      binding::ClassBinding=OneVsRest(),
+                      feedback::FeedbackPolicy=ThresholdFeedback()) where {ClassType,ST<:Unsigned}
     params = Hyperparameters(T=T, S=S, L=L, LF=LF, width=width)
     cls = collect(sort(unique(classes)))
     length(cls) >= 2 || throw(ArgumentError("need at least two classes, got $(length(cls))"))
     half = clauses_per_class ÷ 2
     half >= 1 || throw(ArgumentError("clauses_per_class must be at least 2, got $clauses_per_class"))
     mk() = [ClauseBank{ST}(width, half; states=states, include_limit=include_limit) for _ in cls]
-    return TMClassifier{ClassType,ST,typeof(binding),typeof(ceiling),typeof(budget)}(
-        params, cls, mk(), mk(), ceiling, budget, binding)
+    return TMClassifier{ClassType,ST,typeof(binding),typeof(ceiling),typeof(budget),typeof(feedback)}(
+        params, cls, mk(), mk(), ceiling, budget, binding, feedback)
 end
 
 nclasses(m::TMClassifier) = length(m.classes)
@@ -125,20 +128,27 @@ function update_class!(m::TMClassifier, ci::Integer, x::TMInput, positive::Bool,
 
     @inbounds for j in 1:typeI.nclauses
         rand(rng) < update || continue
-        if clause_vote(typeI, j, x, LF, m.ceiling) > 0
-            n = Int(typeI.count[j])
+        n = Int(typeI.count[j])
+        v = clause_vote(typeI, j, x, LF, m.ceiling)
+        # The feedback policy decides how the vote's magnitude is used. Under the published rule it
+        # is discarded and any nonzero vote reinforces; under a proportional rule a partial match
+        # reinforces only in proportion to how well it matched.
+        if reinforce_branch(m.feedback, v, ceiling(m.ceiling, n, LF), rng)
             feedback!(TypeIa(), typeI, j, x,
-                      reinforce_allowed(m.budget, n, L), promotion_room(m.budget, n, L))
+                      reinforce_allowed(m.budget, n, L),
+                      promotion_room(m.budget, n, L, TypeIa()))
         else
             feedback!(TypeIb(), typeI, j, s, rng)
         end
     end
     @inbounds for j in 1:typeII.nclauses
         rand(rng) < update || continue
-        if clause_vote(typeII, j, x, LF, m.ceiling) > 0
+        n = Int(typeII.count[j])
+        v = clause_vote(typeII, j, x, LF, m.ceiling)
+        if reject_branch(m.feedback, v, ceiling(m.ceiling, n, LF), rng)
             # Unrestricted under GrowthGate, which is what both references do; real headroom under
             # HardCap, since Type II grows clauses too and a cap that ignores it is not a cap.
-            feedback!(TypeII(), typeII, j, x, promotion_room(m.budget, Int(typeII.count[j]), L))
+            feedback!(TypeII(), typeII, j, x, promotion_room(m.budget, n, L, TypeII()))
         end
     end
     return nothing

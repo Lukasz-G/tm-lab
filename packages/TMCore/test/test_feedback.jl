@@ -91,9 +91,9 @@ end
     @test reinforce_allowed(GrowthGate(), 10, 10) == true
     @test reinforce_allowed(GrowthGate(), 11, 10) == false
     @test reinforce_allowed(HardCap(), 999, 10) == true
-    @test promotion_room(GrowthGate(), 0, 10) == typemax(Int)
-    @test promotion_room(HardCap(), 4, 10) == 6
-    @test promotion_room(HardCap(), 12, 10) == 0
+    @test promotion_room(GrowthGate(), 0, 10, TypeIa()) == typemax(Int)
+    @test promotion_room(HardCap(), 4, 10, TypeIa()) == 6
+    @test promotion_room(HardCap(), 12, 10, TypeII()) == 0
 
     # HardCap genuinely bounds clause size where GrowthGate does not: one Type Ia pass on an
     # all-ones input promotes every plain literal at once, which is the overshoot mechanism.
@@ -103,7 +103,7 @@ end
         for _ in 1:3
             n = Int(bank.count[1])
             feedback!(TypeIa(), bank, 1, TMInput(trues(width)),
-                      reinforce_allowed(policy, n, L), promotion_room(policy, n, L))
+                      reinforce_allowed(policy, n, L), promotion_room(policy, n, L, TypeIa()))
         end
         bounded ? (@test bank.count[1] <= L) : (@test bank.count[1] > L)
     end

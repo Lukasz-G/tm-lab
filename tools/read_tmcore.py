@@ -1,4 +1,4 @@
-"""Reference reader for the TMCore model format, version 1.
+"""Reference reader for the TMCore model format, version 2.
 
 Pure standard library, no NumPy, no Julia. If this file is hard to follow, the format is wrong —
 its entire purpose is that another implementation can adopt it without adopting us.
@@ -14,10 +14,11 @@ import struct
 import sys
 
 MAGIC = b"TMCORE\0\0"
-VERSION = 1
+VERSION = 2
 
 CEILING = {0: "literal-capped", 1: "flat-LF"}
 BUDGET = {0: "growth-gate", 1: "hard-cap"}
+FEEDBACK = {0: "threshold", 1: "proportional"}
 
 
 class Model:
@@ -93,8 +94,11 @@ def load(path):
     ceiling, budget, state_bytes, class_type = struct.unpack_from("<BBBB", buf, 60)
     payload_bytes = struct.unpack_from("<Q", buf, 64)[0]
     class_block_bytes = _u32(buf, 72)
+    feedback = buf[76]
+    if any(buf[77:80]):
+        raise ValueError("reserved header bytes are not zero")
 
-    off = 76
+    off = 80
     classes = []
     if class_type == 1:
         for _ in range(nclasses):
@@ -147,7 +151,7 @@ def load(path):
     return Model(width=width, nchunks=nchunks, nclasses=nclasses, nclauses=nclauses,
                  T=T, S=S, L=L, LF=LF, include_limit=include_limit,
                  state_min=state_min, state_max=state_max,
-                 ceiling=ceiling, budget=budget, state_bytes=state_bytes,
+                 ceiling=ceiling, budget=budget, feedback=feedback, state_bytes=state_bytes,
                  classes=classes, banks=banks)
 
 
@@ -160,8 +164,9 @@ def main(argv):
     print("  width %d bits (%d chunks), %d classes, %d clauses per polarity"
           % (m.width, m.nchunks, m.nclasses, m.nclauses))
     print("  T %d  S %d  L %d  LF %d" % (m.T, m.S, m.L, m.LF))
-    print("  ceiling %s, budget %s, automata %s"
+    print("  ceiling %s, budget %s, feedback %s, automata %s"
           % (CEILING.get(m.ceiling, "?"), BUDGET.get(m.budget, "?"),
+             FEEDBACK.get(m.feedback, "?"),
              "absent" if m.state_bytes == 0 else "%d-bit" % (m.state_bytes * 8)))
     print("  classes: %s" % (m.classes,))
     counts = [c for cls in m.banks for pol in cls for c in pol["count"]]

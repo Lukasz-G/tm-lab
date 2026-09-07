@@ -77,13 +77,17 @@ automaton in the clause until erosion brings it back under. `HardCap` always ans
 @inline reinforce_allowed(::HardCap, ::Integer, ::Integer) = true
 
 """
-    promotion_room(policy, current_count, L) -> Int
+    promotion_room(policy, current_count, L, rule) -> Int
 
-How many further literals may cross the include threshold during one Type Ia pass.
+How many further literals may cross the include threshold during one pass of `rule`.
 
-`GrowthGate` does not ration promotions — once the gate is open the clause grows by as much as the
-input supports, which is why observed clause sizes run several times `L`. `HardCap` returns exactly
-the headroom remaining, making `L` a real bound.
+The `rule` argument is not decoration. Clauses grow on **two** paths — Type Ia reinforcement and
+Type II rejection — and the references gate neither of them by `L` in Type II. A policy that cannot
+tell the two apart cannot express the reference behaviour and cannot separate the two effects when
+they are measured, so the distinction belongs in the interface rather than in a comment.
+
+`GrowthGate` rations neither path, which is why observed clause sizes run several times `L`.
+`HardCap` rations both, returning exactly the headroom left.
 """
-@inline promotion_room(::GrowthGate, ::Integer, ::Integer) = typemax(Int)
-@inline promotion_room(::HardCap, n::Integer, L::Integer) = max(0, Int(L) - Int(n))
+@inline promotion_room(::GrowthGate, ::Integer, ::Integer, ::FeedbackRule) = typemax(Int)
+@inline promotion_room(::HardCap, n::Integer, L::Integer, ::FeedbackRule) = max(0, Int(L) - Int(n))

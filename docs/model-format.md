@@ -1,4 +1,4 @@
-# TMCore model format, version 1
+# TMCore model format, version 2
 
 A container for a trained Fuzzy-Pattern Tsetlin Machine. Deliberately boring: a fixed binary header
 followed by raw packed arrays, little-endian throughout, no self-describing schema and no
@@ -34,7 +34,7 @@ trained model rather than on a fixture.
 | Offset | Size | Type | Field |
 |---|---|---|---|
 | 0 | 8 | bytes | magic, ASCII `TMCORE\0\0` |
-| 8 | 4 | uint32 | `version` (currently 1) |
+| 8 | 4 | uint32 | `version` (currently 2) |
 | 12 | 4 | uint32 | `header_size` — byte offset where the payload begins |
 | 16 | 4 | uint32 | `width` — input bits |
 | 20 | 4 | uint32 | `nchunks` — `ceil(width / 64)` |
@@ -53,9 +53,15 @@ trained model rather than on a fixture.
 | 63 | 1 | uint8 | `class_type`: 0 = int64, 1 = utf8 string, 2 = bool |
 | 64 | 8 | uint64 | `payload_bytes` — length of the payload, for truncation detection |
 | 72 | 4 | uint32 | `class_block_bytes` |
-| 76 | … | | class label block |
+| 76 | 1 | uint8 | `feedback_policy`: 0 = threshold, 1 = proportional *(added in v2)* |
+| 77 | 3 | bytes | reserved, must be zero; readers must reject a non-zero value |
+| 80 | … | | class label block |
 
-`header_size` = 76 + `class_block_bytes`, and the payload begins there.
+`header_size` = 80 + `class_block_bytes`, and the payload begins there.
+
+`feedback_policy` affects training only and never inference, so a v1 model's predictions are
+unambiguous without it. It is recorded because a checkpoint reloaded to continue training would
+otherwise switch feedback rules silently.
 
 ### Class label block
 
@@ -103,3 +109,10 @@ prediction is the highest-scoring class, ties going to the lowest index.
 `version` is bumped for any change that an existing reader would misparse. Readers must reject a
 version they do not know rather than guess. Fields are never repurposed; the header grows only at
 the end, and `header_size` means an older reader can still find the payload.
+
+**Changes**
+
+- **v2** — added `feedback_policy` at offset 76 and three reserved bytes, moving the class label
+  block from 76 to 80. A v1 reader misparses a v2 file, which is exactly why the version is bumped
+  rather than the byte quietly appended.
+- **v1** — initial.

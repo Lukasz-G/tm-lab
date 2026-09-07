@@ -39,6 +39,8 @@ export TMInput,
        CeilingPolicy, LiteralCapped, FlatLF, ceiling,
        LiteralBudgetPolicy, GrowthGate, HardCap, reinforce_allowed, promotion_room,
        FeedbackRule, TypeIa, TypeIb, TypeII, feedback!,
+       FeedbackPolicy, ThresholdFeedback, ProportionalFeedback,
+       reinforce_branch, reject_branch,
        ClassBinding, OneVsRest, TMClassifier, vote, score, predict, accuracy,
        train!, update_class!, literal_counts,
        ClauseStats, observe, interior_fraction, satisfaction_spread, vote_histogram,
@@ -48,9 +50,10 @@ export TMInput,
 
 include("input.jl")
 include("ceiling.jl")
-include("budget.jl")
 include("clauses.jl")
 include("feedback.jl")
+include("feedback_policy.jl")
+include("budget.jl")
 include("hyperparameters.jl")
 include("model.jl")
 include("inspect.jl")

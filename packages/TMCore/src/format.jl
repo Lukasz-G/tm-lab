@@ -9,8 +9,8 @@
 # upstream renaming its central struct in 2026 invalidated every model saved before it.
 
 const FORMAT_MAGIC = b"TMCORE\0\0"
-const FORMAT_VERSION = UInt32(1)
-const HEADER_FIXED_BYTES = 76
+const FORMAT_VERSION = UInt32(2)
+const HEADER_FIXED_BYTES = 80
 
 ceiling_code(::LiteralCapped) = 0x00
 ceiling_code(::FlatLF) = 0x01
@@ -23,6 +23,14 @@ budget_code(::HardCap) = 0x01
 budget_from_code(c::UInt8) = c == 0x00 ? GrowthGate() :
                              c == 0x01 ? HardCap() :
                              throw(ArgumentError("unknown budget policy code $c"))
+
+# Version 2 added the feedback policy. It affects training only, never inference, but a checkpoint
+# reloaded to continue training would silently switch rules without it.
+feedback_code(::ThresholdFeedback) = 0x00
+feedback_code(::ProportionalFeedback) = 0x01
+feedback_from_code(c::UInt8) = c == 0x00 ? ThresholdFeedback() :
+                               c == 0x01 ? ProportionalFeedback() :
+                               throw(ArgumentError("unknown feedback policy code $c"))
 
 class_code(::Type{<:Integer}) = 0x00
 class_code(::Type{String}) = 0x01
@@ -79,7 +87,7 @@ Write `model` in the TMCore format (see `docs/model-format.md`).
 of the file. Dropping them yields an inference-only model roughly `width / 8` times smaller per
 clause, at the cost of being unable to train it further.
 """
-function save_model(io::IO, m::TMClassifier{ClassType,S}; include_states::Bool=true) where {ClassType,S}
+function save_model(io::IO, m::TMClassifier{ClassType}; include_states::Bool=true) where {ClassType}
     b1 = m.positive[1]
     with_states = include_states && trainable(b1)
     include_states && !trainable(b1) &&
@@ -105,6 +113,8 @@ function save_model(io::IO, m::TMClassifier{ClassType,S}; include_states::Bool=t
     write(io, class_code(ClassType))
     write(io, UInt64(length(body)))
     write(io, UInt32(length(classblock)))
+    write(io, feedback_code(m.feedback))
+    write(io, zeros(UInt8, 3))                     # reserved, must be zero
     write(io, classblock)
     write(io, body)
     return nothing
@@ -135,6 +145,9 @@ function load_model(io::IO)
     ctype = read(io, UInt8)
     payload_bytes = read(io, UInt64)
     classblock_bytes = read(io, UInt32)
+    feedback = feedback_from_code(read(io, UInt8))
+    reserved = read(io, 3)
+    all(iszero, reserved) || throw(ArgumentError("reserved header bytes are not zero"))
     classes = _read_class_block(io, nclasses, ctype)
 
     # The header is self-checking: three independently derivable quantities must agree, so a
@@ -184,8 +197,8 @@ function load_model(io::IO)
 
     params = Hyperparameters(T=Int(T), S=Int(S), L=Int(L), LF=Int(LF), width=Int(width))
     CT = eltype(classes)
-    return TMClassifier{CT,ST,OneVsRest,typeof(ceiling),typeof(budget)}(
-        params, classes, pos, neg, ceiling, budget, OneVsRest())
+    return TMClassifier{CT,ST,OneVsRest,typeof(ceiling),typeof(budget),typeof(feedback)}(
+        params, classes, pos, neg, ceiling, budget, OneVsRest(), feedback)
 end
 
 load_model(path::AbstractString) = open(load_model, path, "r")
