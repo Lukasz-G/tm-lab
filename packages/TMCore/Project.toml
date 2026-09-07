@@ -3,6 +3,9 @@ uuid = "7c11defa-ba63-4ea8-8215-c948064d4a9c"
 authors = ["Lukasz Gagala <lukaszgagala@wp.pl>"]
 version = "0.0.1"
 
+[deps]
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
 [compat]
 julia = "1.11"
 

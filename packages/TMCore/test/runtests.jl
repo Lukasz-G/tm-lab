@@ -1,5 +1,6 @@
 using Test
 using TMCore
+using Random: MersenneTwister
 
 @testset "TMCore" begin
 
@@ -158,5 +159,9 @@ end
     @test_throws ArgumentError check_symbol_encoding(256, 1, 100)
     @test_throws ArgumentError alias_count(32, 33, 10)
 end
+
+
+include("test_feedback.jl")
+include("test_model.jl")
 
 end

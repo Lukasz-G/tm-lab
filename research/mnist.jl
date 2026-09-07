@@ -38,6 +38,21 @@ function mnist_test(datadir)
 end
 
 """
+    mnist_train(datadir) -> (images, labels, n, nrows, ncols)
+
+Training split, same layout as [`mnist_test`](@ref).
+"""
+function mnist_train(datadir)
+    ib = _fetch_idx(datadir, "train-images-idx3-ubyte")
+    lb = _fetch_idx(datadir, "train-labels-idx1-ubyte")
+    _be32(ib, 1) == 2051 || error("bad image magic")
+    _be32(lb, 1) == 2049 || error("bad label magic")
+    n, nr, nc = _be32(ib, 5), _be32(ib, 9), _be32(ib, 13)
+    px = reshape(ib[17:16+n*nr*nc], nc, nr, n)
+    return px, Int8.(lb[9:8+n]), n, nr, nc
+end
+
+"""
     booleanize_both(px, n) -> (raw, transposed)
 
 Both candidate orientations, booleanized at the upstream threshold (`x > 0.25` on Float32 in

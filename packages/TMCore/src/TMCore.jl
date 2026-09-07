@@ -32,14 +32,23 @@ NOTICE.md.
 """
 module TMCore
 
+using Random: Random, randperm
+
 export TMInput,
-       ClauseBank, clause_vote, clause_vote!, bank_vote, refresh_counts!,
+       ClauseBank, clause_vote, clause_vote!, bank_vote, refresh_counts!, trainable,
        CeilingPolicy, LiteralCapped, FlatLF, ceiling,
+       LiteralBudgetPolicy, GrowthGate, HardCap, reinforce_allowed, promotion_room,
+       FeedbackRule, TypeIa, TypeIb, TypeII, feedback!,
+       ClassBinding, OneVsRest, TMClassifier, vote, score, predict, accuracy,
+       train!, update_class!, literal_counts,
        Hyperparameters, alias_count, check_symbol_encoding, check_transfer
 
 include("input.jl")
 include("ceiling.jl")
+include("budget.jl")
 include("clauses.jl")
+include("feedback.jl")
 include("hyperparameters.jl")
+include("model.jl")
 
 end # module TMCore

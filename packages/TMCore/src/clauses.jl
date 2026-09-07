@@ -26,7 +26,38 @@ struct ClauseBank{S<:Unsigned}
     state::Union{Matrix{S},Nothing}         # width × nclauses, or nothing when inference-only
     state_inv::Union{Matrix{S},Nothing}
     count::Vector{Int32}
+    include_limit::S                        # state at or above which a literal is included
+    state_min::S
+    state_max::S
 end
+
+"""
+    ClauseBank{S}(width, nclauses; states = 256, include_limit = 128)
+
+An untrained, trainable bank. Every automaton starts one step below `include_limit`, so no literal
+is included and every clause is initially empty — which under both ceiling policies means every
+clause votes its maximum, symmetrically across classes, so the first update is unbiased.
+"""
+function ClauseBank{S}(width::Integer, nclauses::Integer;
+                       states::Integer=256, include_limit::Integer=128) where {S<:Unsigned}
+    state_max = states - 1
+    1 <= include_limit <= state_max || throw(ArgumentError("need 1 <= include_limit <= $(state_max)"))
+    state_max <= typemax(S) || throw(ArgumentError("states = $states does not fit in $S"))
+    nch = cld(width, 64)
+    return ClauseBank{S}(Int(width), nch, Int(nclauses),
+                         zeros(UInt64, nch, nclauses), zeros(UInt64, nch, nclauses),
+                         fill(S(include_limit - 1), width, nclauses),
+                         fill(S(include_limit - 1), width, nclauses),
+                         zeros(Int32, nclauses),
+                         S(include_limit), zero(S), S(state_max))
+end
+
+"Bit position of the last valid literal within chunk `n`; the final chunk may be partly padding."
+@inline last_bit(b::ClauseBank, n::Integer) =
+    n < b.nchunks ? 63 : (b.width - (b.nchunks - 1) * 64 - 1)
+
+"True when the bank carries automata and can therefore be trained."
+trainable(b::ClauseBank) = b.state !== nothing
 
 """
     ClauseBank(width, literals, literals_inverted; S = UInt8)
@@ -54,7 +85,8 @@ function ClauseBank(width::Integer,
         end
         cnt[j] = Int32(length(literals[j]) + length(literals_inverted[j]))
     end
-    return ClauseBank{S}(Int(width), nch, nclauses, inc, inv, nothing, nothing, cnt)
+    return ClauseBank{S}(Int(width), nch, nclauses, inc, inv, nothing, nothing, cnt,
+                         S(1), zero(S), typemax(S))
 end
 
 Base.length(b::ClauseBank) = b.nclauses

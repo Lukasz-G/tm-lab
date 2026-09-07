@@ -29,6 +29,14 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
   queue because feedback currently discards that magnitude in 91.6% of firings. Literal
   satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
 
+- **[`mnist-training/`](mnist-training/)** — does TMCore reproduce published FPTM end to end?
+  Trained from scratch on full MNIST it reaches **0.9769** against the published model's 0.9809, and
+  reproduces the characteristic clause-size overshoot (median 16, max 46, under `L`=10) that a wrong
+  feedback rule would not. The 0.4-point gap is provenance, not defect: the shipped model is the
+  best of 512 checkpoints over 1000 epochs, then a pairwise merge, both selected on test accuracy —
+  so it is an optimistically biased number, and merging is also why its clauses are larger.
+  `include_limit` and longer training were both ruled out as explanations.
+
 - **[`tmcore-differential/`](tmcore-differential/)** — does TMCore's bit-packed evaluator match
   FuzzyPatternTM's index-list one? **Exactly**: 4,000,000 comparisons on the published model, zero
   mismatches, and the satisfied mask decodes to the naive recomputation with zero disagreements.

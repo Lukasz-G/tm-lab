@@ -6,7 +6,7 @@ Not a port of any one implementation. FPTM and GraphTM each leave semantics unde
 where they would have to meet, so combining them is a new algorithm, and this repo is set up to
 treat it as one: decisions before code, gates that can fail, negative results kept.
 
-## Status: evaluator built and verified; feedback and training next
+## Status: trains, and reproduces published FPTM
 
 Running against Hnilov's **published** 40-clause MNIST model (pipeline validated at 97.55% test
 accuracy, so it reproduces the model rather than merely loading it),
@@ -80,12 +80,23 @@ cheap insurance is taken up front: a versioned header plus raw packed arrays, re
 in fifty lines with no Julia runtime. Julia `Serialization` is disqualified — it is fragile across
 versions and struct changes, which the measurement track already has to work around.
 
-[TMCore](packages/TMCore/) now has the clause evaluator: bit-packed include masks, a branch-free
-miss kernel, the ceiling as a **policy type** rather than a constant, and the satisfied mask exposed
-as a first-class output. It is checked against Hnilov's reference implementation on his published
-model over **4,000,000 clause evaluations with zero mismatches** — see
-[research/tmcore-differential/](research/tmcore-differential/). Feedback and training are not
-written yet.
+[TMCore](packages/TMCore/) has the clause evaluator, the three feedback rules and one-vs-rest
+training. Bit-packed include masks, a branch-free miss kernel, the satisfied mask exposed as a
+first-class output, and — the point of the design — the **clause-vote ceiling and the literal budget
+as policy types** rather than constants, because the literature disagrees about both.
+
+Verified three independent ways rather than by smoke test:
+
+- the evaluator matches Hnilov's reference implementation over **4,000,000 clause evaluations with
+  zero mismatches** ([tmcore-differential](research/tmcore-differential/));
+- the feedback rules match a naive transcription of the reference **state for state**, 13,078 checks
+  in the test suite;
+- trained from scratch on full MNIST it reaches **0.9769** against the published model's 0.9809, and
+  reproduces the characteristic clause-size overshoot that a wrong feedback rule would not
+  ([mnist-training](research/mnist-training/)).
+
+That last gap is provenance, not defect — the published model is a merged best-of-512 ensemble
+selected on the test set.
 
 ## Layout
 
@@ -116,7 +127,7 @@ so a fresh clone resolves without one.
 
 | Track | What | State |
 |---|---|---|
-| A | Substrate — evaluator, typed feedback, model format, harness | evaluator done and verified exactly against the reference |
+| A | Substrate — evaluator, typed feedback, training | reproduces published FPTM; model format and harness still to do |
 | B | Measurement — satisfied-mask recording, vote histograms, rule mining | first results in |
 | C | Booleanization — thermometer, convolutional-kernel, n-gram encoders | later |
 | D | Algorithmic variants, tested on flat FPTM | after A |
