@@ -1,0 +1,33 @@
+================================================================================
+Annealed LF vs the published constant LF
+================================================================================
+MNIST, 40 clauses/class, T 10, S 125, L 10, LF 5, 30 epochs, 5 seeds
+
+arm                            seed      best    final   literals med/max   LF_end
+--------------------------------------------------------------------------------
+constant LF=5  [published]     20260907  0.9720   0.9714       16 /  46      5   (34 s)
+constant LF=5  [published]           11  0.9724   0.9713       16 /  52      5   (25 s)
+constant LF=5  [published]           12  0.9726   0.9726       16 /  54      5   (25 s)
+constant LF=5  [published]           13  0.9726   0.9709       16 /  63      5   (27 s)
+constant LF=5  [published]           14  0.9724   0.9713       16 /  46      5   (27 s)
+anneal 5->1, T fixed           20260907  0.9678   0.9363       11 /  20      1   (35 s)
+anneal 5->1, T fixed                 11  0.9694   0.9368       11 /  19      1   (37 s)
+anneal 5->1, T fixed                 12  0.9671   0.9352       11 /  18      1   (38 s)
+anneal 5->1, T fixed                 13  0.9682   0.9383       11 /  21      1   (34 s)
+anneal 5->1, T fixed                 14  0.9664   0.9364       11 /  17      1   (34 s)
+anneal 5->1, T rescaled        20260907  0.9665   0.9577       11 /  19      1   (29 s)
+anneal 5->1, T rescaled              11  0.9669   0.9545       11 /  17      1   (29 s)
+anneal 5->1, T rescaled              12  0.9679   0.9513       11 /  21      1   (28 s)
+anneal 5->1, T rescaled              13  0.9685   0.9524       11 /  18      1   (27 s)
+anneal 5->1, T rescaled              14  0.9670   0.9507       11 /  22      1   (26 s)
+anneal 1->5, T fixed  [rev]    20260907  0.9723   0.9723       18 /  50      5   (33 s)
+anneal 1->5, T fixed  [rev]          11  0.9718   0.9710       17 /  40      5   (36 s)
+anneal 1->5, T fixed  [rev]          12  0.9736   0.9707       17 /  44      5   (35 s)
+anneal 1->5, T fixed  [rev]          13  0.9714   0.9701       17 /  41      5   (35 s)
+anneal 1->5, T fixed  [rev]          14  0.9712   0.9712       17 /  46      5   (35 s)
+
+================================================================================
+constant LF=5  [published]     best mean 0.9724  +0.0000   worse on 0/5   (final mean 0.9715)
+anneal 5->1, T fixed           best mean 0.9678  -0.0046   worse on 5/5   (final mean 0.9366)
+anneal 5->1, T rescaled        best mean 0.9674  -0.0050   worse on 5/5   (final mean 0.9533)
+anneal 1->5, T fixed  [rev]    best mean 0.9721  -0.0003   worse on 3/5   (final mean 0.9711)

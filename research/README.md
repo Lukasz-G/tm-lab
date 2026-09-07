@@ -29,6 +29,14 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
   queue because feedback currently discards that magnitude in 91.6% of firings. Literal
   satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
 
+- **[`annealed-lf/`](annealed-lf/)** — does annealing `LF` fuzzy-to-strict help? **No, and the
+  schedule is irrelevant: only the endpoint matters.** Both arms ending at `LF`=1 finish near 0.94,
+  both ending at `LF`=5 finish at 0.971, regardless of where they started. Best-vs-final exposes the
+  real damage — down-annealed models peak at 0.967 early and degrade to 0.937 as `LF` falls, so
+  quoting best accuracy alone would understate it eightfold. Rescaling `T` on the paper's relation
+  recovers half the final loss and none of the peak loss, so mis-calibration was secondary, not
+  causal. A reversed (strict→fuzzy) arm ties the baseline, so early fuzziness buys nothing either.
+
 - **[`misscost/`](misscost/)** — does charging a failed literal by its automaton's confidence help?
   **No, and the premise is false.** Included automata sit at median 128 of a possible 255 — exactly
   the include threshold — because the growth gate freezes reinforcement almost immediately, so the

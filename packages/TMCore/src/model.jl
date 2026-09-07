@@ -24,7 +24,7 @@ by dispatch rather than by a branch or a rewrite.
 """
 mutable struct TMClassifier{ClassType,S<:Unsigned,B<:ClassBinding,C<:CeilingPolicy,
                             P<:LiteralBudgetPolicy,F<:FeedbackPolicy,M<:MissCostPolicy}
-    const params::Hyperparameters
+    params::Hyperparameters      # not const: set_hyper! rewrites T and LF for schedules
     const classes::Vector{ClassType}
     const positive::Vector{ClauseBank{S}}
     const negative::Vector{ClauseBank{S}}
@@ -232,5 +232,28 @@ function calibrate_misscost!(m::TMClassifier)
     isempty(states) && return m
     sort!(states)
     m.misscost = ConfidenceWeightedMissCost(states[max(1, length(states) ÷ 2)])
+    return m
+end
+
+"""
+    set_hyper!(model; T = nothing, LF = nothing) -> model
+
+Change `T` and/or `LF` on a live model, for hyperparameter schedules such as annealing `LF` from
+fuzzy toward strict. Everything else is preserved and the usual validation still applies, so `LF = 0`
+is rejected here exactly as it is at construction.
+
+Note that the two are coupled and changing one alone is a real change of regime, not a tweak. A
+clause's maximum vote is its ceiling, which `LF` bounds, so lowering `LF` shrinks the whole vote
+scale; `T` is the threshold that scale is compared against, and arXiv:2508.08350 §2.1 puts the
+optimum near `sqrt(CLAUSES/2 * LF)`. Anneal `LF` with `T` held fixed and the model drifts further
+from that relation on every step, which is a confound rather than a schedule.
+"""
+function set_hyper!(m::TMClassifier; T=nothing, LF=nothing)
+    p = m.params
+    m.params = Hyperparameters(T = T === nothing ? p.T : T,
+                               S = p.S,
+                               L = p.L,
+                               LF = LF === nothing ? p.LF : LF,
+                               width = p.width)
     return m
 end
