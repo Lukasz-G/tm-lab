@@ -33,35 +33,27 @@ obvious formulation both *withholds reinforcement* and *adds erosion*, so a thir
 | `proportional` | reinforce | reinforce w.p. `vote/ceiling`, else **erode** | erode |
 | `proportional-idle` | reinforce | reinforce w.p. `vote/ceiling`, else **nothing** | erode |
 
-MNIST, published hyperparameters, 30 epochs, 3 seeds.
+MNIST, published hyperparameters, 30 epochs, 10 seeds.
 
 ## Result
 
-```
-policy                    seed        best    final   literals med/max   interior
-threshold   [published]   20260907   0.9720   0.9714      16 /  46     0.920
-threshold   [published]         11   0.9724   0.9713      16 /  52     0.927
-threshold   [published]         12   0.9726   0.9726      16 /  54     0.927
-proportional              20260907   0.9675   0.9650      14 /  31     0.887
-proportional                    11   0.9681   0.9681      14 /  34     0.893
-proportional                    12   0.9681   0.9650      13 /  32     0.896
-proportional-idle         20260907   0.9685   0.9678      14 /  33     0.891
-proportional-idle               11   0.9686   0.9672      14 /  32     0.898
-proportional-idle               12   0.9687   0.9668      14 /  36     0.898
-```
+Ten seeds, paired (every arm sees the same seeds, so the per-seed difference removes seed-to-seed
+variance — the honest test for a sub-point effect).
 
-| | mean best | vs published |
-|---|---|---|
-| threshold | 0.9723 | — |
-| proportional-idle | 0.9686 | −0.0037 |
-| proportional | 0.9679 | −0.0044 |
+| | mean best | sd | vs published | worse on |
+|---|---|---|---|---|
+| threshold (published) | 0.9724 | 0.00029 | — | — |
+| proportional-idle | 0.9684 | 0.00084 | **−0.0040** (se 0.00033) | **10/10 seeds** |
+| proportional | 0.9682 | 0.00047 | **−0.0042** (se 0.00018) | **10/10 seeds** |
 
-**Withholding reinforcement costs −0.0037. Adding erosion on top costs a further −0.0007.** So about
-85% of the damage is the withholding, and the erosion half is nearly irrelevant — which is worth
-knowing, because the erosion half is the part that sounded risky in advance.
+Both variants lose on every single seed, at roughly 20 standard errors. This is not noise.
 
-The seed ranges do not overlap at all (threshold min 0.9720 > idle max 0.9687 > proportional max
-0.9681), so the ordering is not seed noise.
+**Withholding reinforcement costs −0.0040. Adding erosion on top costs a further −0.0002.** So
+essentially *all* the damage is the withholding, and the erosion half — the part that sounded risky
+in advance — is negligible.
+
+Secondary measurements: median clause size falls 16 → 14, maximum ~50 → ~35, and the interior
+fraction falls 0.92 → 0.89.
 
 ## Why it hurts
 
@@ -90,8 +82,8 @@ makes the model worse. A large discarded signal is not automatically a wasted on
 
 ## Caveats
 
-One dataset, one hyperparameter setting, 30 epochs, three seeds. The effect is small in absolute
-terms (0.4 points) though consistent. Two variants remain untried and could behave differently:
+One dataset, one hyperparameter setting, 30 epochs. Ten seeds, and the direction holds on every
+one, so the sign is not in doubt; the effect is nonetheless small in absolute terms (0.4 points). Two variants remain untried and could behave differently:
 scaling the *update magnitude* rather than the acceptance probability, and applying proportionality
 to Type II only — Type II's job is rejection, where a strong wrong-class match arguably should be
 pushed harder than a weak one. Neither is likely to reverse the direction, but neither is tested.

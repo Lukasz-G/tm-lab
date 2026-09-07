@@ -10,9 +10,10 @@
 # clause votes are strictly interior; on a model trained here, 93.8%. So in roughly nine firings out
 # of ten the magnitude carries information that feedback ignores.
 #
-# MEASURED, AND THE PUBLISHED RULE WINS. Using the magnitude costs 0.4 accuracy points on MNIST
-# across three seeds with non-overlapping ranges (research/proportional-feedback/). Splitting the
-# change: withholding reinforcement costs -0.0037, adding erosion a further -0.0007. It does sharpen
+# MEASURED, AND THE PUBLISHED RULE WINS. Using the magnitude costs 0.4 accuracy points on MNIST,
+# losing on 10 of 10 seeds at roughly 20 standard errors (research/proportional-feedback/).
+# Splitting the change: withholding reinforcement costs -0.0040, adding erosion a further -0.0002,
+# so essentially all of it is the withholding. It does sharpen
 # clauses -- median size 16 to 14, interior fraction 0.92 to 0.89 -- and the sharpening is what
 # costs. Unconditional reinforcement is how a clause accumulates the *redundant* literals that give
 # it somewhere to degrade to on a noisy input, which is the property FPTM exists to exploit.

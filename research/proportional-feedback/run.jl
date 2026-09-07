@@ -24,7 +24,7 @@ const EPOCHS = length(ARGS) >= 1 ? parse(Int, ARGS[1]) : 30
 const DATA = normpath(joinpath(@__DIR__, "..", "..", "data"))
 const WIDTH = 784
 const CLAUSES, T, S, L, LF = 40, 10, 125, 10, 5
-const SEEDS = (20260907, 11, 12)
+const SEEDS = (20260907, 11, 12, 13, 14, 15, 16, 17, 18, 19)
 
 println("="^78)
 println("Vote-proportional feedback vs the published threshold rule")
@@ -84,16 +84,25 @@ println("="^78)
 base = results["threshold   [published]"]
 for name in ("threshold   [published]", "proportional", "proportional-idle")
     a = results[name]
-    @printf("%-24s mean %.4f  (min %.4f, max %.4f)   %+.4f vs published\n",
-            name, mean(a), minimum(a), maximum(a), mean(a) - mean(base))
+    @printf("%-24s mean %.4f  sd %.5f  (min %.4f, max %.4f)
+",
+            name, mean(a), std(a), minimum(a), maximum(a))
 end
 
-# The obvious formulation makes two edits at once. Splitting them says which one costs.
+# The arms share seeds, so pair them: the per-seed difference removes seed-to-seed variance and is
+# the honest test of a sub-point effect.
+println()
+for name in ("proportional", "proportional-idle")
+    d = results[name] .- base
+    se = std(d) / sqrt(length(d))
+    @printf("%-20s vs published: mean %+.4f, sd %.5f, se %.5f, worse on %d/%d seeds
+",
+            name, mean(d), std(d), se, count(<(0), d), length(d))
+end
+
 prop, idle = results["proportional"], results["proportional-idle"]
 println()
-@printf("withholding reinforcement alone : %+.4f\n", mean(idle) - mean(base))
-@printf("adding erosion on top of it     : %+.4f\n", mean(prop) - mean(idle))
-println()
-println(mean(prop) > mean(base) || mean(idle) > mean(base) ?
-        "At least one proportional variant helps." :
-        "Both proportional variants hurt: the published threshold rule is the better choice here.")
+@printf("withholding reinforcement alone : %+.4f
+", mean(idle .- base))
+@printf("adding erosion on top of it     : %+.4f
+", mean(prop .- idle))
