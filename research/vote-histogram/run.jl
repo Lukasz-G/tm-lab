@@ -10,6 +10,7 @@
 # data/, which is gitignored.
 
 include(joinpath(@__DIR__, "..", "upstream.jl"))
+include(joinpath(@__DIR__, "..", "mnist.jl"))
 using Printf, Statistics
 
 const FPTM_PATH = upstream("BooBSD-FuzzyPatternTM")
@@ -19,44 +20,13 @@ using .FuzzyPatternTM: load, TMInput, predict
 const MODEL = joinpath(FPTM_PATH, "models", "tm_optimized_40_fp.tm")
 const DATA = joinpath(REPO_ROOT, "data")
 
-# --------------------------------------------------------------------------
-# MNIST test set, straight from the idx files.
-# --------------------------------------------------------------------------
-const MIRROR = "https://ossci-datasets.s3.amazonaws.com/mnist"
+px, y_test, n_img, nr, nc = mnist_test(DATA)
+@printf("MNIST test: %d images, %dx%d
+", n_img, nr, nc)
 
-function fetch_idx(name)
-    mkpath(DATA)
-    gz, raw = joinpath(DATA, name * ".gz"), joinpath(DATA, name)
-    if !isfile(raw)
-        isfile(gz) || download("$MIRROR/$name.gz", gz)
-        open(raw, "w") do out
-            write(out, read(pipeline(`gzip -dc $gz`)))
-        end
-    end
-    return read(raw)
-end
-
-be32(b, i) = (Int(b[i]) << 24) | (Int(b[i+1]) << 16) | (Int(b[i+2]) << 8) | Int(b[i+3])
-
-function mnist_test()
-    ib = fetch_idx("t10k-images-idx3-ubyte")
-    lb = fetch_idx("t10k-labels-idx1-ubyte")
-    be32(ib, 1) == 2051 || error("bad image magic")
-    be32(lb, 1) == 2049 || error("bad label magic")
-    n, nr, nc = be32(ib, 5), be32(ib, 9), be32(ib, 13)
-    px = reshape(ib[17:16+n*nr*nc], nc, nr, n)      # idx is row-major; this lands transposed
-    labels = Int8.(lb[9:8+n])
-    return px, labels, n, nr, nc
-end
-
-px, y_test, n_img, nr, nc = mnist_test()
-@printf("MNIST test: %d images, %dx%d\n", n_img, nr, nc)
-
-# booleanize(x, 0.25) upstream is `x .> 0.25` on Float32 in [0,1], i.e. byte > 63.75.
-# Orientation matters: the model was trained on MLDatasets' layout, and getting it wrong permutes
-# every bit. Decide it by accuracy rather than by assumption.
-bits_raw   = [BitVector(vec(view(px, :, :, i)) .> 0x3f) for i in 1:n_img]
-bits_trans = [BitVector(vec(permutedims(view(px, :, :, i))) .> 0x3f) for i in 1:n_img]
+# Orientation matters: the model was trained on a particular layout, and getting it wrong permutes
+# every bit silently. Decide it by accuracy rather than by assumption.
+bits_raw, bits_trans = booleanize_both(px, n_img)
 
 tm = load(MODEL)
 LF = tm.LF

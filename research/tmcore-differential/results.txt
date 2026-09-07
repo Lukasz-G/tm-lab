@@ -1,0 +1,15 @@
+upstream FuzzyPatternTM @ e25a51e 2026-06-21
+Loading model from D:\Moje dokumenty\Code\TM_FPTM_GraphTM\reference\BooBSD-FuzzyPatternTM\models\tm_optimized_40_fp.tm... Done.
+
+model: 40 clauses/class, 10 classes, L=10, LF=5
+orientation: raw 0.9755 vs transposed 0.1395 -> using raw
+
+imported 20 banks, 400 clause slots
+import round-trips losslessly
+
+LiteralCapped vs FuzzyPatternTM : 4000000 comparisons, 0 mismatches
+FlatLF vs FuzzyPatternTM        : 20000 mismatches, from 2 clause slots in the divergence band
+satisfied mask                  : 0 disagreements with the naive index recomputation
+
+PASS - the packed evaluator reproduces the reference exactly, the satisfied mask is
+       faithful, and the ceiling policy demonstrably changes the result.

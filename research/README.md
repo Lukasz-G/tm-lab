@@ -10,7 +10,8 @@ deleted.
 
 Upstream implementations are **cloned on demand, not vendored** — [`upstream.jl`](upstream.jl)
 fetches them into `reference/`, which is gitignored. So a fresh checkout reproduces every result
-without carrying anyone else's source in our history.
+without carrying anyone else's source in our history. [`mnist.jl`](mnist.jl) is the shared dataset
+loader, pulling idx files straight from a mirror so no experiment needs a heavy data dependency.
 
 ## Answered
 
@@ -27,6 +28,13 @@ without carrying anyone else's source in our history.
   interpretability problem is real and worth mining, and vote-proportional feedback moves up the
   queue because feedback currently discards that magnitude in 91.6% of firings. Literal
   satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
+
+- **[`tmcore-differential/`](tmcore-differential/)** — does TMCore's bit-packed evaluator match
+  FuzzyPatternTM's index-list one? **Exactly**: 4,000,000 comparisons on the published model, zero
+  mismatches, and the satisfied mask decodes to the naive recomputation with zero disagreements.
+  `FlatLF` diverges on exactly 20,000 comparisons — 2 clause slots x 10,000 inputs, precisely the
+  band `ceiling-divergence/` predicted — which confirms the ceiling policy reaches the evaluator
+  rather than being silently ignored.
 
 - **[`ceiling-divergence/`](ceiling-divergence/)** — how far does Tsetlin.jl's flat-`LF` ceiling
   depart from the paper's `min(n, LF)`? **Prediction held**: 2 of 400 clause slots in the divergence

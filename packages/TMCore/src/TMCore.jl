@@ -1,51 +1,45 @@
 """
     TMCore
 
-Substrate for the tm-lab stack: typed feedback architecture, bitpacked clause evaluator, model
-format, benchmark harness. Variant-agnostic — strict and fuzzy are two methods on one core, and TA
-state is a first-class inspectable object. Everything else in tm-lab is a client of this module.
+Substrate for the tm-lab stack: bit-packed clause evaluator, typed feedback architecture, model
+format, benchmark harness. Variant-agnostic — strict and fuzzy are one evaluator under different
+policies, and clause state is a first-class inspectable object rather than an implementation detail.
 
-**No algorithm is implemented yet, deliberately.** See the README for the open questions; the
-remaining blocker is whether fuzziness operates at bit or symbol granularity, which decides what the
-evaluator is parameterized over.
+**Present state: the evaluator.** Feedback and training are not implemented yet.
+
+Design commitments held here, each cheap now and miserable to retrofit:
+
+  * The clause-vote **ceiling is a policy type**, not a constant. The FPTM paper and Hnilov's
+    reference implementation cap it at the clause's own literal count; his optimized rewrite uses a
+    flat `LF`. Reproducing either requires being able to express both on one evaluator.
+  * The evaluator **exposes the satisfied mask**. It is computed anyway, so recording it costs one
+    AND per chunk. Measurement is not an afterthought bolted on later, because recovering which
+    literals carried a partial match is the only route back from an m-of-n rule to something a
+    human can read. This is load-bearing rather than speculative: on Hnilov's published model,
+    91.6% of nonzero clause votes are strictly interior, so partial matching is what these models
+    actually do.
+  * Hyperparameter validation rejects **silent** failures loudly — `LF = 0`, and hypervector
+    encodings too weak for bit-level fuzziness to identify a symbol.
+  * Feedback rules will be swappable components parameterized by type, and clause-to-class binding
+    likewise, so one-vs-rest and coalesced sharing can coexist without either being hardcoded.
+
+Model format, when it lands: a versioned header plus raw packed arrays, readable from Python in
+fifty lines with no Julia runtime. Not Julia `Serialization`, which survives neither a Julia upgrade
+nor a struct rename — upstream renamed its central struct in 2026 and broke exactly that way.
+
+Files that transfer Tsetlin.jl's packed layout or inner loop carry its MIT notice inline; see
+NOTICE.md.
 """
 module TMCore
 
-# Design constraints held for the first real commit, recorded here so they are not quietly lost:
-#
-#   * Feedback rules are swappable components parameterized by type — `feedback!(::TypeIa, ...)`,
-#     fuzzy vs strict, classification vs regression. Dispatch, not branches. Free at runtime in
-#     Julia, and miserable to retrofit later.
-#   * Clause-to-class binding is likewise a type parameter: one-vs-rest now, coalesced later,
-#     neither hardcoded.
-#   * The clause vote counts down from a ceiling. That ceiling is a policy parameter, because the
-#     FPTM paper and its reference implementation disagree about it: the paper caps at the clause's
-#     literal count, the implementation uses `LF` flat. Both must be expressible here or the two
-#     are not comparable on one evaluator.
-#   * The clause evaluator exposes the satisfied mask as a hook. Upstream it is already computed
-#     and then discarded; recovering it is one store, not an instrumentation pass. The measurement
-#     track depends on this and nothing else.
-#
-# Hyperparameter validation that is not optional — each is a silent failure, not a loud one:
-#
-#   * `LF >= 1`. At `LF == 0` no clause can ever vote, so the include set never grows, every
-#     decision margin is exactly zero, and a binary model returns the negative class for every
-#     input. It reads as "no signal" rather than "broken". `LF == 1` is the strict TM.
-#   * `S` scales with input width — upstream derives a literal-decrement count as `length(x) / S`,
-#     so a value tuned at one feature count does not transfer to another. Warn on transfer.
-#   * When fuzzy semantics run over hypervector-encoded symbols, compute the alias count from
-#     (D, H, V) at construction and refuse or warn when it is not negligible. At H <= 2 a clause
-#     one bit short of a full match aliases to whole other symbols, and the fuzziness means nothing;
-#     at H >= 4 it is harmless. This guard is what the evaluator gets *instead* of a match-granularity
-#     parameter — see research/aliasing/ for the arithmetic and why symbol granularity is the coarser
-#     of the two rather than the safer.
-#
-# Model format: a versioned header plus raw packed arrays, readable from Python in fifty lines
-# with no Julia runtime. Not Julia `Serialization` — it does not survive a Julia upgrade or a struct
-# change, which disqualifies it as a format. This costs nothing now and is the one thing that does
-# not get cheaper by deferring, because what gets formalized later is whatever exists by then.
-#
-# Files that transfer Tsetlin.jl's packed layout or inner loop must carry its MIT notice inline.
-# See NOTICE.md.
+export TMInput,
+       ClauseBank, clause_vote, clause_vote!, bank_vote, refresh_counts!,
+       CeilingPolicy, LiteralCapped, FlatLF, ceiling,
+       Hyperparameters, alias_count, check_symbol_encoding, check_transfer
+
+include("input.jl")
+include("ceiling.jl")
+include("clauses.jl")
+include("hyperparameters.jl")
 
 end # module TMCore
