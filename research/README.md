@@ -65,6 +65,7 @@ learned message computes.
 | [`ceiling-divergence`](ceiling-divergence/) | paper, reference and optimized fork disagree on the clause-vote ceiling; worth 0.40% |
 | [`booleanization`](booleanization/) | **`s = width/S` confounds any encoder comparison at differing widths** |
 | [`vote-histogram`](vote-histogram/) | fuzziness is load-bearing: 91.6% of nonzero votes strictly interior |
+| [`vote-resolution`](vote-resolution/) | the fuzzy vote buys **~3x** the resolution of its binarization, not `LF`x, and does not scale with `LF` |
 | [`eviction`](eviction/) | reset eviction decouples confidence from rigidity, for 0–0.4 pts |
 | [`aliasing`](aliasing/) | `hypervector_bits` is the lever for symbol fuzziness, not match granularity |
 

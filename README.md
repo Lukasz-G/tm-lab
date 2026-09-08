@@ -52,6 +52,10 @@ constants: clause-vote ceiling, literal budget, feedback rule, miss cost, class 
 - **The clause-vote ceiling differs** between the paper, the reference implementation and the
   optimized fork. Small in effect (0.40%), but the two are not the same model.
 - **Fuzziness is load-bearing**, not decorative: 91.6% of nonzero clause votes are strictly interior.
+- **A fuzzy vote buys ~3x the output resolution of its own binarization, not `LF`x**, and the factor
+  does not grow when `LF` does. Firing votes sit near the bottom of [1, `LF`] whatever the ceiling,
+  so most of a large `LF` is never used. This is the arithmetic the case for FPTM regression rests
+  on, measured before committing to a third feedback rule.
 
 ## What did not work
 

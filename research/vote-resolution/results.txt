@@ -1,0 +1,31 @@
+============================================================================================
+Does an FPTM class vote carry CLAUSES x LF resolution, or only CLAUSES?
+============================================================================================
+MNIST, 60000 train, 10000 test, 12 epochs
+
+--------------------------------------------------------------------------------------------
+40 clauses/class, LF  5   test accuracy 0.9563
+  vote-sum range        fuzzy    82   binarized    28   ratio  2.93x   claimed 5x
+  effective, exp(H)     fuzzy  34.1   binarized  13.6   ratio  2.52x   claimed 5x
+  mean firing clause vote      2.03   of ceiling 5
+--------------------------------------------------------------------------------------------
+40 clauses/class, LF 10   test accuracy 0.9522
+  vote-sum range        fuzzy    92   binarized    25   ratio  3.68x   claimed 10x
+  effective, exp(H)     fuzzy  42.1   binarized  12.4   ratio  3.40x   claimed 10x
+  mean firing clause vote      2.56   of ceiling 10
+--------------------------------------------------------------------------------------------
+200 clauses/class, LF  5   test accuracy 0.9723
+  vote-sum range        fuzzy   179   binarized    73   ratio  2.45x   claimed 5x
+  effective, exp(H)     fuzzy  69.2   binarized  31.1   ratio  2.23x   claimed 5x
+  mean firing clause vote      1.71   of ceiling 5
+--------------------------------------------------------------------------------------------
+200 clauses/class, LF 10   test accuracy 0.9544
+  vote-sum range        fuzzy   207   binarized    65   ratio  3.18x   claimed 10x
+  effective, exp(H)     fuzzy  93.2   binarized  32.1   ratio  2.90x   claimed 10x
+  mean firing clause vote      1.80   of ceiling 10
+
+============================================================================================
+Compare the measured ratio against the claimed one in each row. The ratio is what the
+fuzzy vote actually buys over its own binarization; LF is what the regression argument
+assumes it buys. The last line of each block is why they differ: firing votes sit near
+the bottom of [1, LF] instead of spreading across it.
