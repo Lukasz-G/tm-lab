@@ -3,13 +3,20 @@
 # Fetched straight from the idx files rather than through MLDatasets, so experiments carry no heavy
 # data dependency. Files land in gitignored data/.
 
-const _MNIST_MIRROR = "https://ossci-datasets.s3.amazonaws.com/mnist"
+# Fashion-MNIST is byte-identical in format to MNIST — same idx layout, same 28x28x60000 shape — so
+# one loader serves both and only the mirror changes. That is the whole reason it is the cheapest
+# second dataset to add.
+const _MIRRORS = Dict(
+    :mnist   => "https://ossci-datasets.s3.amazonaws.com/mnist",
+    :fashion => "https://github.com/zalandoresearch/fashion-mnist/raw/master/data/fashion",
+)
 
-function _fetch_idx(datadir, name)
-    mkpath(datadir)
-    gz, raw = joinpath(datadir, name * ".gz"), joinpath(datadir, name)
+function _fetch_idx(datadir, name; which::Symbol=:mnist)
+    dir = which === :mnist ? datadir : joinpath(datadir, string(which))
+    mkpath(dir)
+    gz, raw = joinpath(dir, name * ".gz"), joinpath(dir, name)
     if !isfile(raw)
-        isfile(gz) || download("$_MNIST_MIRROR/$name.gz", gz)
+        isfile(gz) || download("$(_MIRRORS[which])/$name.gz", gz)
         open(raw, "w") do out
             write(out, read(pipeline(`gzip -dc $gz`)))
         end
@@ -27,9 +34,9 @@ row-major idx buffer in Julia's column-major order lands transposed relative to 
 in fact the layout the upstream models were trained on. Callers should still confirm orientation by
 accuracy rather than trusting this comment; see [`booleanize_both`](@ref).
 """
-function mnist_test(datadir)
-    ib = _fetch_idx(datadir, "t10k-images-idx3-ubyte")
-    lb = _fetch_idx(datadir, "t10k-labels-idx1-ubyte")
+function mnist_test(datadir; which::Symbol=:mnist)
+    ib = _fetch_idx(datadir, "t10k-images-idx3-ubyte"; which=which)
+    lb = _fetch_idx(datadir, "t10k-labels-idx1-ubyte"; which=which)
     _be32(ib, 1) == 2051 || error("bad image magic")
     _be32(lb, 1) == 2049 || error("bad label magic")
     n, nr, nc = _be32(ib, 5), _be32(ib, 9), _be32(ib, 13)
@@ -42,9 +49,9 @@ end
 
 Training split, same layout as [`mnist_test`](@ref).
 """
-function mnist_train(datadir)
-    ib = _fetch_idx(datadir, "train-images-idx3-ubyte")
-    lb = _fetch_idx(datadir, "train-labels-idx1-ubyte")
+function mnist_train(datadir; which::Symbol=:mnist)
+    ib = _fetch_idx(datadir, "train-images-idx3-ubyte"; which=which)
+    lb = _fetch_idx(datadir, "train-labels-idx1-ubyte"; which=which)
     _be32(ib, 1) == 2051 || error("bad image magic")
     _be32(lb, 1) == 2049 || error("bad label magic")
     n, nr, nc = _be32(ib, 5), _be32(ib, 9), _be32(ib, 13)

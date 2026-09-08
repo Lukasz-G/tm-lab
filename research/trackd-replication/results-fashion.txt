@@ -1,0 +1,26 @@
+======================================================================================
+Track D replication on FASHION
+======================================================================================
+40 clauses/class, T 10, S 125, L 10, LF 5, 20 epochs, 3 seeds
+
+train 60000, test 10000
+
+variant                          best (per seed)              mean    final   lits med/max
+--------------------------------------------------------------------------------------
+baseline  [published]          0.8587 0.8591 0.8573   0.8584  0.8550     14 /  34
+proportional feedback          0.8507 0.8499 0.8490   0.8499  0.8497     13 /  26
+proportional-idle              0.8527 0.8508 0.8523   0.8519  0.8490     13 /  29
+confidence-weighted miss cost  0.8575 0.8569 0.8551   0.8565  0.8550     12 /  22
+anneal LF 5->1, T rescaled     0.8549 0.8556 0.8529   0.8545  0.8360     11 /  17
+L gates Type II too            0.7992 0.7934 0.7981   0.7969  0.7885     12 / 151
+
+======================================================================================
+                               vs baseline    worse on
+proportional feedback            -0.0085        3/3 seeds
+proportional-idle                -0.0064        3/3 seeds
+confidence-weighted miss cost    -0.0019        3/3 seeds
+anneal LF 5->1, T rescaled       -0.0039        3/3 seeds
+L gates Type II too              -0.0615        3/3 seeds
+
+MNIST reference, for comparison (30 epochs, from the original runs):
+  proportional -0.0042 | prop-idle -0.0040 | weighted -0.0028 | anneal -0.0050 | capII -0.1339

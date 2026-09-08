@@ -15,6 +15,13 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
 
 ## Answered
 
+- **[`trackd-replication/`](trackd-replication/)** — do the Track D conclusions survive a second
+  dataset? **Direction yes, magnitude no.** All five variants lose on Fashion-MNIST too, 3/3 seeds
+  each, with the clause-shrinkage mechanism reproducing. But effect sizes move by up to 2x
+  (proportional feedback -0.0085 vs -0.0042; Type II cap -0.0615 vs -0.1339), so they are
+  dataset-specific and should not be quoted as properties of FPTM. Caveat stated plainly: two 28x28
+  grayscale image sets is a weak replication.
+
 - **[`aliasing/`](aliasing/)** — bit- versus symbol-granular fuzziness over a sparse distributed
   code. The criterion passes at `H` <= 2 and fails at `H` >= 4, so `H` is the lever rather than the
   granularity; and symbol granularity turns out to be the coarser of the two, buying
