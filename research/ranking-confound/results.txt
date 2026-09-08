@@ -1,0 +1,47 @@
+==============================================================================================
+Confound check: does the clause matter, or is this just global feature relevance?
+==============================================================================================
+12800 features, 25000 train, 25000 test, 20 epochs
+
+model accuracy 0.8990
+
+
+=== NEGATIVE sentiment, positive clause (3563 literals of 25600 possible) ===
+    N     CLAUSE literals          GLOBAL (model ignored)   RANDOM subset           
+    3       1803 docs  P 0.832       785 docs  P 0.969      1961 docs  P 0.706
+    5        180 docs  P 0.972       223 docs  P 0.991       177 docs  P 0.853
+    10        38 docs  P 0.974        22 docs  P 1.000        10 docs  P 1.000
+    20         4 docs  P 0.750         0 docs  P NaN         0 docs  P NaN
+    top-10 overlap between CLAUSE and GLOBAL: 6 of 10
+    GLOBAL top 10 (no model involved):
+          "bad"
+      NOT "great"
+          "worst"
+          "no"
+      NOT "is a"
+          "the worst"
+          "even"
+      NOT "best"
+          "just"
+          "plot"
+
+=== POSITIVE sentiment, positive clause (3443 literals of 25600 possible) ===
+    N     CLAUSE literals          GLOBAL (model ignored)   RANDOM subset           
+    3       4731 docs  P 0.768      4731 docs  P 0.768     11974 docs  P 0.599
+    5       1186 docs  P 0.843      1414 docs  P 0.836     11974 docs  P 0.599
+    10       910 docs  P 0.889       154 docs  P 0.935        16 docs  P 1.000
+    20       556 docs  P 0.924         2 docs  P 1.000         0 docs  P NaN
+    top-10 overlap between CLAUSE and GLOBAL: 5 of 10
+    GLOBAL top 10 (no model involved):
+      NOT "bad"
+          "great"
+      NOT "worst"
+      NOT "no"
+          "is a"
+      NOT "the worst"
+      NOT "even"
+          "best"
+      NOT "just"
+      NOT "plot"
+
+If GLOBAL matches CLAUSE, the model contributed nothing and the earlier result was hollow.

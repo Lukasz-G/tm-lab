@@ -15,14 +15,19 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
 
 ## Answered
 
-- **[`discriminative-ranking/`](discriminative-ranking/)** — **a readable rule out of an unreadable
-  clause. The first genuine interpretability result here.** Scoring each literal by
-  `P(satisfied | in class) - P(satisfied | out of class)`, ranked on train and evaluated on test,
-  turns a 3,443-literal clause into a 10-word rule at **0.889** precision over 910 test documents —
-  against frequency and random baselines both at chance. The rules read as rules: positive sentiment
-  is NOT "bad", "great", NOT "worst", NOT "the worst", "best", NOT "nothing", NOT "awful", NOT
-  "waste". It summarises what a clause is *about* rather than reproducing what it computes, and only
-  the positive-polarity clauses work.
+- **[`ranking-confound/`](ranking-confound/)** — does the clause contribute anything to the
+  "readable rule"? **Mostly no, and this retracts the result below.** Ranking with the model ignored
+  entirely finds the same vocabulary (5-6 of the same top-10, identical top-3 rules) at generally
+  *higher* precision. The words are the dataset's, not the model's — unsurprising once you notice the
+  score is the chi-square relevance that selected the features to begin with. One residual survives:
+  clause membership keeps literals **jointly satisfiable**, holding 556 documents at 0.924 where
+  global ranking collapses to 2. The clause is a selector of compatible features, not a source of
+  insight.
+
+- **[`discriminative-ranking/`](discriminative-ranking/)** — extracts short, readable,
+  high-precision rules from IMDb (10 literals at 0.889 over 910 documents, against frequency and
+  random baselines at chance). **Its interpretation is retracted by `ranking-confound/`**: the
+  numbers hold, but the model is not what produces the readable words.
 
 - **[`literal-ranking/`](literal-ranking/)** — can the confidence gradient make an unreadable clause
   readable? **No.** On IMDb the gradient *saturates* (median state 255, 99.9% at the ceiling) because

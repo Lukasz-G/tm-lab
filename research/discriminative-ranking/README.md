@@ -1,7 +1,19 @@
 # discriminative-ranking — a readable rule out of an unreadable clause
 
-**Status: works. A 3,443-literal clause reduces to a 10-word rule at 0.889 precision.** First
-genuine interpretability result here. `julia --project=. run.jl [epochs]`; output in `results.txt`.
+**Status: RETRACTED in substance by [`ranking-confound/`](../ranking-confound/). Read that first.**
+
+The numbers below stand; the interpretation does not. Ranking the same way with the **model ignored
+entirely** finds the same vocabulary — 5 to 6 of the same top-10 literals, identical top-3 rules on
+the positive clause — at generally higher precision. The readable words come from the dataset, not
+from the clause, and the score used is essentially the chi-square relevance that selected these
+12,800 features in the first place.
+
+What survives is narrower: the clause keeps its selected literals *jointly satisfiable*, so at larger
+N it retains coverage (556 documents at 0.924) where global ranking collapses to 2 documents. That
+makes the clause a useful selector of compatible features, not a source of insight about which words
+matter.
+
+`julia --project=. run.jl [epochs]`; output in `results.txt`.
 
 ## Why the previous attempts failed
 
