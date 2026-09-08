@@ -1,0 +1,30 @@
+============================================================================================
+Stage 4 — one message round, on a task where messages are load-bearing
+============================================================================================
+alphabet 8, length 12, 10000 train, 5000 test, 40 clauses/class, 20 epochs, 3 seeds
+class balance: 0.502 positive
+max difference in symbol presence between classes: 0.0149  (0 = perfectly matched)
+
+arm                                accuracy (per seed)
+--------------------------------------------------------------------------------------------
+flat, bag of symbols  [control]    seed 20260908  0.5156   (1 s)
+flat, bag of symbols  [control]    seed 11  0.5156   (0 s)
+flat, bag of symbols  [control]    seed 12  0.5156   (0 s)
+flat, positional                   seed 20260908  0.9858   (1 s)
+flat, positional                   seed 11  0.9906   (1 s)
+flat, positional                   seed 12  0.9868   (1 s)
+per-node, no messages [control]    seed 20260908  0.5156   (2 s)
+per-node, no messages [control]    seed 11  0.5156   (2 s)
+per-node, no messages [control]    seed 12  0.5156   (2 s)
+per-node, ONE message round        seed 20260908  1.0000   (2 s)
+per-node, ONE message round        seed 11  1.0000   (2 s)
+per-node, ONE message round        seed 12  1.0000   (2 s)
+
+============================================================================================
+flat, bag of symbols  [control]    mean 0.5156   (width 8)
+flat, positional                   mean 0.9877   (width 96)
+per-node, no messages [control]    mean 0.5156   (width 8)
+per-node, ONE message round        mean 1.0000   (width 24)
+
+Controls must sit at ~0.50. If either is above chance the task is not what it claims and
+nothing else here can be read.

@@ -33,6 +33,15 @@ Of the two undecided semantics it forces: fuzzy OR across nodes should be **max*
 assignment has **no stable answer** — random and argmax trade places across configurations, both
 within a few thousandths.
 
+[`message-round`](message-round/) — Stage 4, one message round. On a task built so flat models
+provably cannot win (both controls sit at chance), one round solves it **perfectly at a quarter of
+the width** the flat positional encoding needs, and that flat arm only reaches 0.9877.
+
+Qualification that matters: these are **identity** messages — a node receives its neighbours'
+symbols — which is functionally a 3-gram window. Learned messages, the thing that distinguishes
+GraphTM, are Stage 5 and untested. This shows the machinery works end to end, not that graph
+structure earns its keep.
+
 ## Findings about FPTM
 
 | | result |
