@@ -15,6 +15,14 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
 
 ## Answered
 
+- **[`pileup-verify/`](pileup-verify/)** — is the automaton pile-up real in Hnilov's code, and is
+  `L` the cause? **Yes to both.** Trained with FuzzyPatternTM itself: at `L`=10 its included automata
+  sit at median exactly 128 with only 8.1% above the threshold (TMCore: 128, 7.7%); at `L`=100000
+  the gate never shuts and 97.0% are above it in both. So the finding is about FPTM as published, not
+  this reimplementation — and the two agree to within a percentage point on every measurement, which
+  cross-validates TMCore on a quantity no test covered. Removing `L` is not an option: accuracy
+  collapses 0.95 → 0.31.
+
 - **[`confidence-payoff/`](confidence-payoff/)** — with a real gradient present, does weighting by
   confidence help? **No.** Gradient + uniform cost is 0.9718; gradient + weighted is 0.9691
   (calibrated) and 0.9704 (nominal), both below it. The original failure was not for want of

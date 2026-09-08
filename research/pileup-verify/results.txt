@@ -1,0 +1,15 @@
+========================================================================================
+Is the automaton pile-up real in FuzzyPatternTM, and is L the cause?
+========================================================================================
+MNIST, 20000 train, 40 clauses/class, T 10, S 125, LF 5, 5 epochs
+
+implementation        L        accuracy   lits med   incl-state min/med/max   above thr
+----------------------------------------------------------------------------------------
+FuzzyPatternTM         10   0.9536         16    128 / 128 / 133        8.1%   (published-style, 3 s)
+TMCore                 10   0.9517         15    128 / 128 / 136        7.7%   (published-style, 2 s)
+FuzzyPatternTM     100000   0.3114        542    128 / 152 / 255       97.0%   (gate never shuts, 13 s)
+TMCore             100000   0.3422        523    128 / 158 / 255       97.0%   (gate never shuts, 3 s)
+
+Pile-up = median sitting on the include threshold (128) with 'above thr' near zero.
+If it appears at L=10 in FuzzyPatternTM and vanishes at L=100000, L is the cause and the
+finding is about FPTM as published, not about this reimplementation.
