@@ -76,6 +76,11 @@ width. `s` held constant in every arm.
 on MNIST, +0.0221 on Fashion-MNIST, +0.1409 on CIFAR-10, ordered by task difficulty. This is the
 first positive result in this repo that survives a change of dataset.
 
+[`clause-count`](clause-count/) — **calibration, not a finding.** That more clauses help and that
+`T` must scale with them is in the FPTM paper; re-measuring it was not worth the compute. Kept
+because it shows the stack reaches **0.6324** on CIFAR-10, published range, so the gap left by
+`booleanization-cifar` was clause count and not a defect in the evaluator.
+
 ## Findings about FPTM
 
 | | result |

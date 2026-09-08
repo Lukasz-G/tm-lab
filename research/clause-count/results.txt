@@ -1,0 +1,18 @@
+============================================================================================
+CIFAR-10 clause-count sweep, best encoder (RGB x2 thermometer + fixed edge kernels)
+============================================================================================
+T follows the FPTM paper's T ~ sqrt(CLAUSES/2 * LF); fixed-T rows are the control.
+
+  clauses    T     mean       sd best epoch   seconds
+--------------------------------------------------------------------------------------------
+       40   10   0.5388   0.0025       25.0       219 *
+      100   16   0.5847   0.0049       25.0       460  +0.0459 *
+      250   25   0.6120   0.0074       23.5      1142  +0.0273
+      500   35   0.6210   0.0011       23.0      1657  +0.0090
+     1000   50   0.6324   0.0000       21.0      2393  +0.0114
+
+Controls (T held at its 40-clause value instead of scaled):
+      250   10   0.5645   -0.0475 vs scaled T
+
+* = every seed peaked on the final epoch, so that row had not converged and understates
+  its clause count. Read the trend, and treat a starred top row as a lower bound.
