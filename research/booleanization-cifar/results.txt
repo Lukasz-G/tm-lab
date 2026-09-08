@@ -1,0 +1,42 @@
+Precompiling TMBoolean...
+   1009.0 ms  ✓ TMBoolean
+  1 dependency successfully precompiled in 1 seconds
+====================================================================================================
+Track C on CIFAR-10: colour and fixed kernels, at constant s
+====================================================================================================
+flat FPTM in every arm: 40 clauses/class, T 10, L 10, LF 5, 20000 train, 5000 test, 25 epochs, 3 seeds
+s held at 33 in every arm by setting S = width / 33
+
+loading CIFAR-10 ... done
+arm                                  accuracy per seed
+----------------------------------------------------------------------------------------------------
+  grayscale x4, no kernels [baseline]  width  4096, s 33, 0 dead bits
+  grayscale x4, no kernels [baseline]  seed 20260908  0.3532   (65 s)
+  grayscale x4, no kernels [baseline]  seed 11  0.3552   (69 s)
+  grayscale x4, no kernels [baseline]  seed 12  0.3500   (64 s)
+  grayscale x6, no kernels [width ctl] width  6144, s 33, 0 dead bits
+  grayscale x6, no kernels [width ctl] seed 20260908  0.3582   (90 s)
+  grayscale x6, no kernels [width ctl] seed 11  0.3672   (86 s)
+  grayscale x6, no kernels [width ctl] seed 12  0.3606   (87 s)
+  RGB x2, no kernels                   width  6144, s 33, 0 dead bits
+  RGB x2, no kernels                   seed 20260908  0.4204   (80 s)
+  RGB x2, no kernels                   seed 11  0.4386   (81 s)
+  RGB x2, no kernels                   seed 12  0.4294   (79 s)
+  grayscale x4 + edge kernels          width  5446, s 33, 0 dead bits
+  grayscale x4 + edge kernels          seed 20260908  0.4894   (73 s)
+  grayscale x4 + edge kernels          seed 11  0.4956   (72 s)
+  grayscale x4 + edge kernels          seed 12  0.4960   (73 s)
+  RGB x2 + edge kernels                width 10194, s 33, 0 dead bits
+  RGB x2 + edge kernels                seed 20260908  0.5406   (116 s)
+  RGB x2 + edge kernels                seed 11  0.5370   (118 s)
+  RGB x2 + edge kernels                seed 12  0.5366   (116 s)
+
+====================================================================================================
+grayscale x4, no kernels [baseline]  mean 0.3528   +0.0000 vs baseline   (width 4096)
+grayscale x6, no kernels [width ctl] mean 0.3620   +0.0092 vs baseline   (width 6144)
+RGB x2, no kernels                   mean 0.4295   +0.0767 vs baseline   (width 6144)
+grayscale x4 + edge kernels          mean 0.4937   +0.1409 vs baseline   (width 5446)
+RGB x2 + edge kernels                mean 0.5381   +0.1853 vs baseline   (width 10194)
+
+Read RGB against the grayscale x6 width control, not against the baseline: that pair
+differs only in colour. Baseline-relative numbers fold in width and threshold count too.

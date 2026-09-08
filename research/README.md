@@ -65,6 +65,17 @@ firing votes average 1.1–1.6, leaving the upper thermometer bits dead. A side 
 learned messages beat the identity *ceiling* there, because identity copies the neighbour while a
 learned message computes.
 
+## Track C — booleanization
+
+[`booleanization-cifar`](booleanization-cifar/) — how much of the gap to published CIFAR-10 numbers
+is the encoder? **+18.5 points with the machine untouched** (0.3528 → 0.5381), from colour plus fixed
+edge kernels. A width-matched grayscale control gains only +0.0092, so colour is colour and not
+width. `s` held constant in every arm.
+
+[`kernel-replication`](kernel-replication/) — and it **replicates**: fixed edge kernels gain +0.0115
+on MNIST, +0.0221 on Fashion-MNIST, +0.1409 on CIFAR-10, ordered by task difficulty. This is the
+first positive result in this repo that survives a change of dataset.
+
 ## Findings about FPTM
 
 | | result |

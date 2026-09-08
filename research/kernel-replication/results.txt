@@ -1,0 +1,46 @@
+================================================================================================
+Do fixed edge kernels replicate across datasets?
+================================================================================================
+grayscale everywhere, 40 clauses/class, T 10, L 10, LF 5, s held at 33
+20000 train, 5000 test, 25 epochs, 3 seeds
+
+------------------------------------------------------------------------------------------------
+MNIST  (28x28, 20000 train, 5000 test)
+  no kernels  [baseline]   width  3136  seed 20260908  0.9550   (13 s)
+  no kernels  [baseline]   width  3136  seed 11  0.9558   (12 s)
+  no kernels  [baseline]   width  3136  seed 12  0.9550   (12 s)
+  + edge kernels           width  4150  seed 20260908  0.9670   (15 s)
+  + edge kernels           width  4150  seed 11  0.9664   (15 s)
+  + edge kernels           width  4150  seed 12  0.9670   (16 s)
+  => +0.0115 from kernels
+
+------------------------------------------------------------------------------------------------
+FASHION  (28x28, 20000 train, 5000 test)
+  no kernels  [baseline]   width  3136  seed 20260908  0.8708   (17 s)
+  no kernels  [baseline]   width  3136  seed 11  0.8672   (17 s)
+  no kernels  [baseline]   width  3136  seed 12  0.8694   (17 s)
+  + edge kernels           width  4150  seed 20260908  0.8934   (21 s)
+  + edge kernels           width  4150  seed 11  0.8898   (21 s)
+  + edge kernels           width  4150  seed 12  0.8904   (21 s)
+  => +0.0221 from kernels
+
+------------------------------------------------------------------------------------------------
+CIFAR  (32x32, 20000 train, 5000 test)
+  no kernels  [baseline]   width  4096  seed 20260908  0.3532   (49 s)
+  no kernels  [baseline]   width  4096  seed 11  0.3552   (51 s)
+  no kernels  [baseline]   width  4096  seed 12  0.3500   (49 s)
+  + edge kernels           width  5446  seed 20260908  0.4894   (64 s)
+  + edge kernels           width  5446  seed 11  0.4956   (62 s)
+  + edge kernels           width  5446  seed 12  0.4960   (64 s)
+  => +0.1409 from kernels
+
+================================================================================================
+SUMMARY
+================================================================================================
+dataset      baseline   +kernels      delta
+mnist          0.9553     0.9668    +0.0115
+fashion        0.8691     0.8912    +0.0221
+cifar          0.3528     0.4937    +0.1409
+
+PASS if kernels win on all three. If they win on CIFAR-10 alone, the effect belongs to
+CIFAR-10 and not to booleanization, and the write-up has to say that.

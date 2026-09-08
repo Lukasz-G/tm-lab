@@ -8,21 +8,20 @@ Decisions before code, gates that can fail, negative results kept.
 A working substrate, verified against the reference implementation several ways, plus a handful of
 undocumented facts about FPTM.
 
-**Two things work, and neither survives a change of dataset.** A convolutional FPTM — per-patch
-evaluation, no message passing — beats flat FPTM by **+0.0216** on MNIST at the same clause count,
-and **loses by 0.0429 on CIFAR-10**. Learned messages beat a random channel of the same width on a
-synthetic task built for them, and contribute nothing on CIFAR-10 once a dead-channel control is run.
-Every *algorithmic* variant tried has lost, one positive interpretability result was retracted after
-its control was run, and regression is untouched.
+**The encoder beats the algorithm, by an order of magnitude.** Changing only the booleanization —
+colour plus fixed edge kernels, machine untouched — moves CIFAR-10 from 0.3528 to **0.5381**, and the
+kernel half of that **replicates on MNIST and Fashion-MNIST**. Meanwhile every algorithmic variant
+tried has lost, the two graph mechanisms that worked on synthetic tasks contribute nothing on
+CIFAR-10, and one positive interpretability result was retracted after its control was run.
 
-The pattern across this repo is that results survive their own controls and then fail on the second
-dataset.
+Every other positive here failed on its second dataset. The encoder result is the first that did
+not.
 
 ## Packages
 
 ```
 packages/TMCore/     evaluator, typed feedback, training, model format, measurement, benchmark
-packages/TMBoolean/  booleanization encoders; depends on nothing, not even TMCore
+packages/TMBoolean/  booleanization encoders (thermometer, conv kernels, n-gram); depends on nothing
 research/            experiments; scripts, not a package
 tools/               reference Python reader for the model format
 docs/                model format specification
@@ -77,7 +76,30 @@ redundant literals that let it degrade on noisy input. Effect sizes scale with t
 
 Interpretability is unresolved. See [research/](research/).
 
-## What worked, and where it stopped
+## What worked
+
+**Booleanization, by a wide margin.** On CIFAR-10, with flat FPTM and the same 40 clauses per class
+throughout, the encoder alone is worth **+18.5 points**:
+
+| encoder | width | accuracy |
+|---|---|---|
+| grayscale ×4 *[baseline]* | 4096 | 0.3528 |
+| grayscale ×6 **[width control]** | 6144 | 0.3620 |
+| RGB ×2 | 6144 | 0.4295 |
+| grayscale ×4 + edge kernels | 5446 | 0.4937 |
+| **RGB ×2 + edge kernels** | 10194 | **0.5381** |
+
+The width control is what makes that readable: grayscale widened to RGB's exact width gains +0.0092,
+so colour is colour and not width. `s = width/S` is held constant in every arm, because otherwise the
+table would measure `s`.
+
+The kernel half **replicates across datasets** — +0.0115 on MNIST, +0.0221 on Fashion-MNIST, +0.1409
+on CIFAR-10, ordered by task difficulty. Nothing else in this repo has done that.
+
+This is also the one result adoptable in isolation: `TMBoolean` depends on nothing, not even
+`TMCore`, and emits plain `BitMatrix`.
+
+## What worked only on one dataset
 
 **Convolutional evaluation** — cutting the image into patches, evaluating each clause on every patch
 and taking the **max** — beats flat FPTM by +0.0216 on MNIST at 40 clauses per class (0.9720 vs
