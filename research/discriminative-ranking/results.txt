@@ -1,0 +1,86 @@
+==============================================================================================
+Discriminative literal ranking on IMDb — does a short rule survive?
+==============================================================================================
+12800 features, 25000 train, 25000 test, T 18 S 1000 L 64 LF 64, 20 epochs
+
+stock FPTM, trained as published: accuracy 0.8990
+
+==============================================================================================
+TRUNCATION — ranked on TRAIN, evaluated on TEST
+==============================================================================================
+
+--- NEGATIVE sentiment, for clause 1: 3563 literals (base rate 0.500) ---
+    N     DISCRIMINATIVE           frequency                random                  
+    3       1803 docs  P 0.832     24980 docs  P 0.500     24825 docs  P 0.502
+    5        180 docs  P 0.972     24953 docs  P 0.501     24746 docs  P 0.503
+    10        38 docs  P 0.974     24914 docs  P 0.501     24446 docs  P 0.506
+    20         4 docs  P 0.750     24837 docs  P 0.502     23416 docs  P 0.512
+    50         1 docs  P 1.000     24627 docs  P 0.505     21792 docs  P 0.527
+    top 10 discriminative:
+          "bad"   (score +0.232)
+      NOT "great"   (score +0.170)
+          "no"   (score +0.141)
+          "the worst"   (score +0.119)
+          "just"   (score +0.107)
+          "plot"   (score +0.104)
+      NOT "the best"   (score +0.088)
+      NOT "excellent"   (score +0.086)
+          "to be"   (score +0.081)
+      NOT "a great"   (score +0.080)
+
+--- NEGATIVE sentiment, against clause 1: 3910 literals (base rate 0.500) ---
+    N     DISCRIMINATIVE           frequency                random                  
+    3       6655 docs  P 0.540     24956 docs  P 0.499     24962 docs  P 0.499
+    5          0 docs  P NaN     24926 docs  P 0.499     24866 docs  P 0.498
+    10         0 docs  P NaN     24886 docs  P 0.499     24384 docs  P 0.495
+    20         0 docs  P NaN     24794 docs  P 0.498     23196 docs  P 0.481
+    50         0 docs  P NaN     24544 docs  P 0.495         0 docs  P NaN
+    top 10 discriminative:
+          "i"   (score +0.061)
+          "but"   (score +0.036)
+          "about"   (score +0.032)
+          "then they"   (score +0.006)
+          "very disappointed"   (score +0.005)
+          "clumsy"   (score +0.004)
+          "a gun"   (score +0.004)
+          "worst movie i've ever"   (score +0.004)
+          "boring movie"   (score +0.003)
+          "even he"   (score +0.003)
+
+--- POSITIVE sentiment, for clause 1: 3443 literals (base rate 0.500) ---
+    N     DISCRIMINATIVE           frequency                random                  
+    3       4731 docs  P 0.768     24951 docs  P 0.501     24885 docs  P 0.502
+    5       1186 docs  P 0.843     24945 docs  P 0.501     24762 docs  P 0.503
+    10       910 docs  P 0.889     24903 docs  P 0.501     24510 docs  P 0.505
+    20       556 docs  P 0.924     24786 docs  P 0.502       428 docs  P 0.395
+    50         2 docs  P 1.000     24566 docs  P 0.506       333 docs  P 0.417
+    top 10 discriminative:
+      NOT "bad"   (score +0.232)
+          "great"   (score +0.170)
+      NOT "worst"   (score +0.145)
+      NOT "the worst"   (score +0.119)
+          "best"   (score +0.113)
+      NOT "nothing"   (score +0.100)
+      NOT "awful"   (score +0.091)
+      NOT "waste"   (score +0.089)
+      NOT "minutes"   (score +0.079)
+      NOT "boring"   (score +0.072)
+
+--- POSITIVE sentiment, against clause 1: 3186 literals (base rate 0.500) ---
+    N     DISCRIMINATIVE           frequency                random                  
+    3          2 docs  P 1.000     24979 docs  P 0.500     23956 docs  P 0.495
+    5          0 docs  P NaN     24964 docs  P 0.500     23931 docs  P 0.494
+    10         0 docs  P NaN     24916 docs  P 0.499     23377 docs  P 0.487
+    20         0 docs  P NaN     24870 docs  P 0.499     22527 docs  P 0.481
+    50         0 docs  P NaN     24692 docs  P 0.496     19796 docs  P 0.460
+    top 10 discriminative:
+          "as"   (score +0.055)
+          "of all time"   (score +0.006)
+          "it works"   (score +0.006)
+          "the former"   (score +0.003)
+          "war ii"   (score +0.003)
+          "what will"   (score +0.003)
+          "role for"   (score +0.003)
+          "tears to"   (score +0.002)
+      NOT "a porn"   (score +0.002)
+          "the story's"   (score +0.002)

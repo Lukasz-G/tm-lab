@@ -15,6 +15,15 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
 
 ## Answered
 
+- **[`discriminative-ranking/`](discriminative-ranking/)** — **a readable rule out of an unreadable
+  clause. The first genuine interpretability result here.** Scoring each literal by
+  `P(satisfied | in class) - P(satisfied | out of class)`, ranked on train and evaluated on test,
+  turns a 3,443-literal clause into a 10-word rule at **0.889** precision over 910 test documents —
+  against frequency and random baselines both at chance. The rules read as rules: positive sentiment
+  is NOT "bad", "great", NOT "worst", NOT "the worst", "best", NOT "nothing", NOT "awful", NOT
+  "waste". It summarises what a clause is *about* rather than reproducing what it computes, and only
+  the positive-polarity clauses work.
+
 - **[`literal-ranking/`](literal-ranking/)** — can the confidence gradient make an unreadable clause
   readable? **No.** On IMDb the gradient *saturates* (median state 255, 99.9% at the ceiling) because
   clauses fire on 78% of documents and reinforcement pins them at max — MNIST clauses fire on ~9%,
