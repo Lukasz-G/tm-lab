@@ -1,159 +1,77 @@
 # tm-lab
 
 A Julia workbench for the Tsetlin Machine stack — TM, Fuzzy-Pattern TM (FPTM), and Graph TM.
+Decisions before code, gates that can fail, negative results kept.
 
-Not a port of any one implementation. FPTM and GraphTM each leave semantics undefined at the points
-where they would have to meet, so combining them is a new algorithm, and this repo is set up to
-treat it as one: decisions before code, gates that can fail, negative results kept.
+## Status, honestly
 
-## Status: substrate complete
+A working substrate, verified against the reference implementation several ways, plus a handful of
+undocumented facts about FPTM. **No improvement on the published design.** Every algorithmic variant
+tried so far has lost, and the one positive interpretability result was retracted after its control
+was run. The graph and regression tracks are untouched.
 
-Running against Hnilov's **published** 40-clause MNIST model (pipeline validated at 97.55% test
-accuracy, so it reproduces the model rather than merely loading it),
-[research/vote-histogram/](research/vote-histogram/) answers the first real question: **FPTM's
-fuzziness is load-bearing, not decorative.** Of the clause evaluations that vote at all, 91.6% land
-strictly inside the interval rather than at the ceiling. So the m-of-n interpretability problem is
-real and worth mining — this was falsifiable in the other direction and did not fall that way — and
-vote-proportional feedback moves up the queue, since feedback currently binarizes at `vote > 0` and
-discards that magnitude in 91.6% of firings.
-
-### Settled: the clause-vote ceiling
-
-A fuzzy clause's vote counts down from a ceiling, one per failed literal, clipped at zero. What that
-ceiling is turned out to be the blocking question, because it is the *unit* of the vote — it decides
-whether short general clauses vote as loudly as long specific ones, whether `L` and `LF` are
-independent knobs, how `T` is calibrated, and whether votes are comparable across clauses at all.
-
-The FPTM paper (arXiv:2508.08350 §2) initializes the vote to the clause's literal count or `LF`,
-**whichever is smaller**, with the empty clause special-cased upward to `LF`. Hnilov's own optimized
-implementation, Tsetlin.jl, uses **`LF` flat** — no literal-count term at all. The two agree for
-empty clauses and for clauses holding at least `LF` literals, and diverge for everything in between,
-where the flat form over-votes.
-
-A third source breaks the tie: FuzzyPatternTM, Hnilov's own *reference* implementation, matches the
-paper exactly — empty-clause special case and all. Two of three agree; the optimized rewrite is the
-outlier, and still is at upstream HEAD.
-
-Measured rather than argued in [research/ceiling-divergence/](research/ceiling-divergence/): on the
-published model, 2 of 400 clause slots fall in the divergence band, worth 0.40% of ceiling mass. So
-flat `LF` is a safe fast path at convergence, and the paper's ceiling matters during training and
-for degenerate clauses. The paper is normative; the ceiling is a policy parameter so both stay
-reproducible on one evaluator.
-
-That experiment also turned up something not being looked for: **`L` is a growth gate, not a cap.**
-It is checked before an increment pass that pushes many automata over the include threshold at once,
-so it decides whether a clause may grow this round rather than bounding its size. On the published
-model `L` = 10 while clauses hold 12 to 54 literals — every clause exceeds its own documented cap.
-
-### Settled: bit- versus symbol-granular fuzziness
-
-Over thermometer or bag-of-words features a partial match is a meaningful sub-pattern. Over a sparse
-distributed code — a symbol being `H` bits set out of `D` — it might instead be a corrupted symbol
-aliasing to every other symbol sharing the remaining bits, which would make bit-level fuzziness
-incoherent and force fuzziness to be redefined over whole symbols.
-
-Answered by arithmetic in [research/aliasing/](research/aliasing/). The mechanism is real —
-forgiving one bit inflates the false-positive rate by 27x to 763x, worst where the code is sparsest.
-But `H` is the lever, not the granularity: the expected number of other symbols that alone drive a
-clause to within one of a full vote is 12.2 at `H`=2, `D`=32, and 5.7e-04 at `H`=4, `D`=256. The
-danger zone is `H` <= 2 and it ends abruptly.
-
-And the expected fix is not the conservative one. Forgiving a whole symbol turns a 3-symbol clause
-into a 2-symbol clause, so at `H` >= 4 symbol-level tolerance admits *more* false positives than
-bit-level tolerance of two bits. Symbol granularity buys interpretability, not correctness.
-
-So the evaluator takes a construction-time `(D, H, V)` guard rather than a granularity parameter,
-and bit granularity — the cheaper inner loop, with bit-packing intact — is the default. The one case
-this does not cover is message symbols, whose codes are cyclic shifts of one another rather than
-independent draws.
-
-### Settled: what this repo is
-
-tm-lab is a lab. Code accumulates here, and a standalone registerable package gets extracted if and
-when something earns it. The `packages/` layout makes that split a file move rather than a refactor,
-so deferring the decision costs almost nothing.
-
-The one exception is the **model format**. Its value is adoption by other implementations, and that
-does not get cheaper by waiting — not because the decision is urgent, but because whatever
-serialization exists when the question is finally asked is what ends up being formalized. So the
-cheap insurance is taken up front: a versioned header plus raw packed arrays, readable from Python
-in fifty lines with no Julia runtime. Julia `Serialization` is disqualified — it is fragile across
-versions and struct changes, which the measurement track already has to work around.
-
-[TMCore](packages/TMCore/) has the clause evaluator, the three feedback rules and one-vs-rest
-training. Bit-packed include masks, a branch-free miss kernel, the satisfied mask exposed as a
-first-class output, and — the point of the design — the **clause-vote ceiling and the literal budget
-as policy types** rather than constants, because the literature disagrees about both.
-
-Verified three independent ways rather than by smoke test:
-
-- the evaluator matches Hnilov's reference implementation over **4,000,000 clause evaluations with
-  zero mismatches** ([tmcore-differential](research/tmcore-differential/));
-- the feedback rules match a naive transcription of the reference **state for state**, 13,078 checks
-  in the test suite;
-- trained from scratch on full MNIST it reaches **0.9769** against the published model's 0.9809, and
-  reproduces the characteristic clause-size overshoot that a wrong feedback rule would not
-  ([mnist-training](research/mnist-training/)).
-
-That last gap is provenance, not defect — the published model is a merged best-of-512 ensemble
-selected on the test set.
-
-It also carries a **language-neutral model format** ([spec](docs/model-format.md)) — a fixed binary
-header and raw packed arrays, deliberately not Julia `Serialization`, which survives neither a Julia
-upgrade nor a struct rename. A model trained in Julia is read back by
-[tools/read_tmcore.py](tools/read_tmcore.py), a pure-standard-library Python reader written against
-the spec rather than against the writer, reproducing every per-class score exactly. Inference-only
-models drop the automata and are 8x smaller at identical predictions.
-
-The **measurement hook** the interpretability work needs is part of the substrate rather than bolted
-on: `observe` records per-clause vote distributions and satisfied masks at the cost of one extra AND
-per chunk. On a model trained here, 93.8% of nonzero clause votes are strictly interior —
-independently reproducing the finding from the published model.
-
-Single-threaded inference runs at ~107,000 predictions/s on 784-bit MNIST with 400 clause slots.
-
-## Layout
+## Packages
 
 ```
-packages/TMCore/     substrate: evaluator, typed feedback, training, model format, measurement
+packages/TMCore/     evaluator, typed feedback, training, model format, measurement, benchmark
 packages/TMBoolean/  booleanization encoders; depends on nothing, not even TMCore
-research/            experiments and measurement; scripts, not a package
-NOTICE.md            third-party attribution, and when a file needs an inline notice
+research/            experiments; scripts, not a package
+tools/               reference Python reader for the model format
+docs/                model format specification
 ```
 
-One package today. `packages/` exists so that booleanization and graph work can be added as
-directories rather than as a refactor, and so that pulling any of them out as a standalone package
-later stays a file move.
+`TMCore` is checked against Hnilov's FuzzyPatternTM three ways: the evaluator matches over
+**4,000,000 clause evaluations with zero mismatches**, the feedback rules match a naive transcription
+of the reference **state for state** (13,078 checks), and training from scratch reaches **0.9769** on
+MNIST against the published model's 0.9809 — a gap traced to that model being a merged best-of-512
+ensemble selected on the test set.
+
+The [model format](docs/model-format.md) is a fixed binary header and raw packed arrays, deliberately
+not Julia `Serialization`. A model trained in Julia is read back by
+[tools/read_tmcore.py](tools/read_tmcore.py) — pure standard library, written against the spec —
+reproducing every per-class score exactly.
+
+The design's point is that decisions the literature disagrees about are **policy types**, not
+constants: clause-vote ceiling, literal budget, feedback rule, miss cost, class binding.
+
+## What was found
+
+- **`L` is a growth gate, not a cap.** It gates whether a clause may grow this round; it does not
+  bound its size. Clauses run 5–58× over it. Confirmed in Hnilov's own code, and gating the Type II
+  path with it costs 13.4 points, so the omission there is working design rather than oversight. The
+  paper's `LF ≤ L` guidance reads as a capacity statement and is not one.
+- **Automata pile up exactly on the include threshold**, because `L` freezes the only force that can
+  raise an included one. So "automaton confidence" barely exists in a trained model. Confirmed in
+  Hnilov's code; removing `L` fixes it and destroys accuracy (0.95 → 0.31).
+- **`s = width/S` confounds any encoder comparison at differing widths.** In one measurement it
+  accounted for more of the apparent effect than the encoder did.
+- **The clause-vote ceiling differs** between the paper, the reference implementation and the
+  optimized fork. Small in effect (0.40%), but the two are not the same model.
+- **Fuzziness is load-bearing**, not decorative: 91.6% of nonzero clause votes are strictly interior.
+
+## What did not work
+
+Five algorithmic variants — vote-proportional feedback, confidence-weighted miss cost, annealed `LF`,
+capping `L`, and confidence-weighted evaluation on a repaired gradient. All lose, on
+**15 of 15 dataset-variant combinations** across MNIST, Fashion-MNIST and CIFAR-10, every seed.
+
+One mechanism explains all of them: each reduces a clause's tolerance, so it stops accumulating the
+redundant literals that let it degrade on noisy input. Effect sizes scale with task difficulty.
+
+Interpretability is unresolved. See [research/](research/).
 
 ## Getting started
 
 ```
-julia --project=.        # dev environment; packages/ resolved via [sources], Julia 1.11+
+julia --project=.
 ```
 
 ```julia
-using Pkg; Pkg.test("TMCore")
+using Pkg; Pkg.test("TMCore"); Pkg.test("TMBoolean")
 ```
 
-`Manifest.toml` is not committed. `[sources]` in the root `Project.toml` records the package paths,
+`Manifest.toml` is not committed; `[sources]` in the root `Project.toml` records the package paths,
 so a fresh clone resolves without one.
-
-## Tracks
-
-| Track | What | State |
-|---|---|---|
-| A | Substrate — evaluator, typed feedback, training, model format, harness | **done** |
-| B | Measurement — satisfied-mask recording, vote histograms, rule mining | first results in |
-| C | Booleanization — `TMBoolean`, zero-dependency encoders | thermometer done and measured |
-| D | Algorithmic variants, tested on flat FPTM | after A |
-| E | Graph — per-node evaluation, message passing, depth | last |
-
-Track B is deliberately first. FPTM keeps a clause's include set but breaks the identity between
-that set and the rule the clause encodes: a clause with 100 literals and `LF`=50 fires on any 50 of
-them, which is an m-of-n rule, a much weaker interpretability class. Recording *which* literals
-actually match, across many inputs, says whether that structure is recoverable — and it runs against
-upstream Tsetlin.jl and a published model, so it needs nothing from Track A. It is falsifiable in
-both directions, which is the point.
 
 ## License
 

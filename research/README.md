@@ -1,184 +1,61 @@
 # research/
 
-Experiments, measurement, and one-off analysis. **Not a package** — scripts here may depend on
-anything, including upstream implementations, and are not held to the API stability or test coverage
-expected of `packages/`.
+Experiments. **Not a package** — scripts here may depend on anything, including upstream
+implementations, and are not held to `packages/`'s API stability or test coverage.
 
-Each experiment gets a directory with a `README.md` stating the question, the pass/fail criterion
-**decided in advance**, and the answer once it has one. A negative result is written up here, not
-deleted.
+Each directory has a `run.jl`, its raw output in `results.txt`, and a `README.md` giving the question
+and the answer. Pass/fail criteria are stated in the script header **before** the run; negative
+results are kept, not deleted.
 
-Upstream implementations are **cloned on demand, not vendored** — [`upstream.jl`](upstream.jl)
-fetches them into `reference/`, which is gitignored. So a fresh checkout reproduces every result
-without carrying anyone else's source in our history. [`mnist.jl`](mnist.jl) is the shared dataset
-loader, pulling idx files straight from a mirror so no experiment needs a heavy data dependency.
+Upstream implementations are cloned on demand by [`upstream.jl`](upstream.jl) into gitignored
+`reference/`, so a fresh checkout reproduces everything without vendoring anyone's source.
+[`mnist.jl`](mnist.jl) loads MNIST and Fashion-MNIST; [`cifar.jl`](cifar.jl) loads CIFAR-10.
 
-## Answered
+## Verification of the implementation
 
-- **[`ranking-confound/`](ranking-confound/)** — does the clause contribute anything to the
-  "readable rule"? **Mostly no, and this retracts the result below.** Ranking with the model ignored
-  entirely finds the same vocabulary (5-6 of the same top-10, identical top-3 rules) at generally
-  *higher* precision. The words are the dataset's, not the model's — unsurprising once you notice the
-  score is the chi-square relevance that selected the features to begin with. One residual survives:
-  clause membership keeps literals **jointly satisfiable**, holding 556 documents at 0.924 where
-  global ranking collapses to 2. The clause is a selector of compatible features, not a source of
-  insight.
+| | result |
+|---|---|
+| [`tmcore-differential`](tmcore-differential/) | evaluator matches the reference: 4,000,000 comparisons, 0 mismatches |
+| [`mnist-training`](mnist-training/) | trains to 0.9769 vs published 0.9809; the gap is the published model's ensembling |
+| [`format-crosscheck`](format-crosscheck/) | independent Python reader reproduces every score exactly |
+| [`pileup-verify`](pileup-verify/) | TMCore and FuzzyPatternTM agree to within 1pp on automaton distributions |
 
-- **[`discriminative-ranking/`](discriminative-ranking/)** — extracts short, readable,
-  high-precision rules from IMDb (10 literals at 0.889 over 910 documents, against frequency and
-  random baselines at chance). **Its interpretation is retracted by `ranking-confound/`**: the
-  numbers hold, but the model is not what produces the readable words.
+## Findings about FPTM
 
-- **[`literal-ranking/`](literal-ranking/)** — can the confidence gradient make an unreadable clause
-  readable? **No.** On IMDb the gradient *saturates* (median state 255, 99.9% at the ceiling) because
-  clauses fire on 78% of documents and reinforcement pins them at max — MNIST clauses fire on ~9%,
-  which is why a spread appeared there. So reset eviction yields a usable gradient only for
-  infrequently-firing clauses. The frequency baseline is no better (every truncation at P≈0.50):
-  both signals measure *how often a literal holds*, not *how much it separates classes*, which is
-  the real flaw. A discriminative score needs no gradient and was not tried.
+| | result |
+|---|---|
+| [`budget-paths`](budget-paths/) | **`L` is a growth gate, not a cap**, and must not gate Type II (−13.4 pts if it does) |
+| [`pileup-verify`](pileup-verify/) | **automata pile up on the include threshold**, caused by `L`; removing `L` is catastrophic |
+| [`ceiling-divergence`](ceiling-divergence/) | paper, reference and optimized fork disagree on the clause-vote ceiling; worth 0.40% |
+| [`booleanization`](booleanization/) | **`s = width/S` confounds any encoder comparison at differing widths** |
+| [`vote-histogram`](vote-histogram/) | fuzziness is load-bearing: 91.6% of nonzero votes strictly interior |
+| [`eviction`](eviction/) | reset eviction decouples confidence from rigidity, for 0–0.4 pts |
+| [`aliasing`](aliasing/) | `hypervector_bits` is the lever for symbol fuzziness, not match granularity |
 
-- **[`pileup-verify/`](pileup-verify/)** — is the automaton pile-up real in Hnilov's code, and is
-  `L` the cause? **Yes to both.** Trained with FuzzyPatternTM itself: at `L`=10 its included automata
-  sit at median exactly 128 with only 8.1% above the threshold (TMCore: 128, 7.7%); at `L`=100000
-  the gate never shuts and 97.0% are above it in both. So the finding is about FPTM as published, not
-  this reimplementation — and the two agree to within a percentage point on every measurement, which
-  cross-validates TMCore on a quantity no test covered. Removing `L` is not an option: accuracy
-  collapses 0.95 → 0.31.
+## Variants tried, all negative
 
-- **[`confidence-payoff/`](confidence-payoff/)** — with a real gradient present, does weighting by
-  confidence help? **No.** Gradient + uniform cost is 0.9718; gradient + weighted is 0.9691
-  (calibrated) and 0.9704 (nominal), both below it. The original failure was not for want of
-  confidence — the rule is just bad, and this removes the explanation the earlier negatives could
-  hide behind. The gradient's *interpretability* use (ranking literals within a clause) is untouched
-  by this and remains the open route.
+[`proportional-feedback`](proportional-feedback/), [`misscost`](misscost/),
+[`annealed-lf`](annealed-lf/), [`confidence-payoff`](confidence-payoff/),
+[`partial-freeze`](partial-freeze/), and the `L` arm of [`budget-paths`](budget-paths/).
+[`trackd-replication`](trackd-replication/) re-runs them on Fashion-MNIST and CIFAR-10: **15 of 15
+dataset-variant combinations lose, every seed.** Effect sizes vary fivefold and track task
+difficulty, so only the direction is a property of FPTM.
 
-- **[`eviction/`](eviction/)** — can a clause have a size limit *and* a confidence gradient? **Yes,
-  via reset eviction, for 0 to 0.4 accuracy points.** In a reference-trained FPTM every included
-  automaton sits on the include threshold, so confidence-based ideas are dead on arrival. The cause
-  is that `GrowthGate` freezes the only force that can raise an included automaton. Unfreezing it
-  naively costs 16.9 points, because eviction is a fixed step and a saturated literal needs 127 hits
-  to leave instead of 1 — confidence and forgetting are the same dial. Making eviction *reset* a
-  literal below the threshold breaks the coupling: the gradient appears (6.7% → 94% above threshold
-  on MNIST) at +0.0003 / −0.0012 / −0.0040 on MNIST / Fashion / CIFAR.
+One mechanism covers all of them: each reduces a clause's tolerance, so it stops accumulating the
+redundant literals that let it degrade gracefully. Clause size tracks accuracy throughout.
 
-- **[`partial-freeze/`](partial-freeze/)** — the failed first attempt, kept because its failure is
-  what identified the mechanism.
+## Interpretability, unresolved
 
-- **[`trackd-replication/`](trackd-replication/)** — do the Track D conclusions survive other
-  datasets? **Direction yes — 15 of 15 dataset-variant combinations, every seed, across MNIST,
-  Fashion-MNIST and CIFAR-10.** Magnitude no: effects vary fivefold and are ordered by task
-  difficulty (proportional feedback costs 0.4 points on MNIST, 0.9 on Fashion, 2.3 on CIFAR), which
-  the mechanism predicts — redundancy is insurance, worth most where the signal is weakest. So the
-  MNIST numbers were the most flattering case and understated the damage by up to 5x. The
-  runaway-growth signature sharpens too: capping Type II drives max clause size to 1,947 of 2,048
-  literals on CIFAR.
+[`mask-mining`](mask-mining/) found a conjunctive core plus tolerance tail on MNIST;
+[`imdb-readability`](imdb-readability/) showed it does not generalise, with `LF`/literals as the
+diagnostic. [`literal-ranking`](literal-ranking/) and
+[`discriminative-ranking`](discriminative-ranking/) tried ranking a clause's literals;
+[`ranking-confound`](ranking-confound/) showed the readable words come from the dataset rather than
+the model, and **retracted the result**.
 
-- **[`aliasing/`](aliasing/)** — bit- versus symbol-granular fuzziness over a sparse distributed
-  code. The criterion passes at `H` <= 2 and fails at `H` >= 4, so `H` is the lever rather than the
-  granularity; and symbol granularity turns out to be the coarser of the two, buying
-  interpretability rather than correctness. The evaluator takes a construction-time `(D, H, V)`
-  guard instead of a granularity parameter. Residual: message symbols, whose codes are cyclic shifts
-  rather than independent draws.
-
-- **[`vote-histogram/`](vote-histogram/)** — is FPTM's fuzziness load-bearing or decorative?
-  **Load-bearing, decisively.** Of the evaluations that vote at all, 91.62% are strictly interior
-  and only 8.38% reach the ceiling; per-clause interior fraction has median 0.936. So the m-of-n
-  interpretability problem is real and worth mining, and vote-proportional feedback moves up the
-  queue because feedback currently discards that magnitude in 91.6% of firings. Literal
-  satisfaction spread (median 0.638) says the mask has core-plus-tail structure to recover.
-
-- **[`booleanization/`](booleanization/)** — how much accuracy lives in the encoder? **On MNIST,
-  about +0.002 — and more than half of what a naive test would credit to it is a confound.** `s` is
-  derived as `width/S`, so widening 784 → 3136 bits quadruples the forgetting rate unless `S` is
-  scaled. Holding `s` fixed, four bits per pixel beats one by +0.0021; letting `s` drift adds
-  another +0.0025. Also: fitted thresholds do *not* beat upstream's hardcoded quartiles, and a
-  2-bit thermometer beats every 4-bit arm. The convolutional-kernel claim that motivated the track
-  is a much stronger intervention and remains untested.
-
-- **[`imdb-readability/`](imdb-readability/)** — do the extracted cores read as rules when literals
-  are words? **No, and the reason is a ratio.** Reproduces the published IMDb number (0.9012 vs
-  0.9015) at one clause per class, then finds cores of 3,375-4,127 literals: precise (0.979) and
-  unreadable. The clause holds 3,843 literals with `LF`=64, so it tolerates 1.7% of them failing and
-  is already a near-strict conjunction — against 21% on MNIST, where the decomposition worked. So
-  **`LF` / included-literals is the diagnostic**: below a few percent there is no tail to separate.
-  Unplanned: **not one core requires a term to be present** — the model is a pure blacklist,
-  classifying by which n-grams are missing.
-
-- **[`mask-mining/`](mask-mining/)** — is a fuzzy clause recoverable as a rule? **Yes, and this is
-  the first clearly positive result here.** Not "k rules plus a tail" as hypothesised — the median
-  clause has 195 distinct satisfied masks and top-10 coverage of only 42% — but a **strict
-  conjunctive core plus a tolerance tail**: 11 of 23.5 literals are satisfied in >=95% of firings.
-  Extracted standalone, that core is a real rule. Positive-clause cores carry the class signal in
-  **92%** of cases at a median **7.37x** lift, the best firing at 99%+ precision over hundreds of
-  examples. Negative cores are smaller and hold only 59% of the time, so half the model is markedly
-  less explicable than the other half.
-
-- **[`annealed-lf/`](annealed-lf/)** — does annealing `LF` fuzzy-to-strict help? **No, and the
-  schedule is irrelevant: only the endpoint matters.** Both arms ending at `LF`=1 finish near 0.94,
-  both ending at `LF`=5 finish at 0.971, regardless of where they started. Best-vs-final exposes the
-  real damage — down-annealed models peak at 0.967 early and degrade to 0.937 as `LF` falls, so
-  quoting best accuracy alone would understate it eightfold. Rescaling `T` on the paper's relation
-  recovers half the final loss and none of the peak loss, so mis-calibration was secondary, not
-  causal. A reversed (strict→fuzzy) arm ties the baseline, so early fuzziness buys nothing either.
-
-- **[`misscost/`](misscost/)** — does charging a failed literal by its automaton's confidence help?
-  **No, and the premise is false.** Included automata sit at median 128 of a possible 255 — exactly
-  the include threshold — because the growth gate freezes reinforcement almost immediately, so the
-  confidence gradient the idea wanted to exploit barely exists. The nominal threshold is never
-  reached and silently becomes a no-op; the calibrated one lands on the include floor, making the
-  policy "halve `LF`" in disguise, which costs 0.28 points on 5/5 seeds. Also ~7x slower and
-  unusable on inference-only models.
-
-- **[`proportional-feedback/`](proportional-feedback/)** — does using the clause vote's magnitude
-  at the feedback boundary help? **No — it hurts on 10 of 10 seeds.** 0.9724 published rule vs
-  0.9684 and 0.9682 for the two proportional variants, at roughly 20 standard errors. Isolating the
-  two edits: withholding reinforcement costs -0.0040, adding erosion a further -0.0002, so
-  essentially all the damage is the withholding. It *sharpened* clauses as hoped (median 16 to 14, interior 0.92 to
-  0.89) and that is exactly what cost accuracy — unconditional reinforcement is how a clause
-  accumulates the redundant literals that let it degrade gracefully. The premise that motivated the
-  experiment is inverted: a large discarded signal is not automatically a wasted one.
-
-- **[`budget-paths/`](budget-paths/)** — which growth path does `L` need to gate? **Not Type II.**
-  Adding a Type II cap to the reference policy and changing nothing else costs 13.4 accuracy points,
-  against 5.7 for capping Type Ia, because Type II is how a clause learns to *reject* — block it and
-  clauses grow without bound (max size 46 → 305 → 774). So `L` is a brake on reinforcement growth,
-  the references are right never to check it in Type II, and what is wrong is the name: `L` is
-  documented as a maximum clause size, is not one, and cannot be made one cheaply.
-
-- **[`format-crosscheck/`](format-crosscheck/)** — is the model format actually a format? A model
-  trained in Julia is read back by `tools/read_tmcore.py`, a pure-standard-library Python reader
-  written against the spec rather than against the writer, which reproduces **every per-class score
-  exactly** on 50 MNIST cases. Exercises chunk padding at width 784, array ordering, the ceiling
-  policy code, and the stored-count consistency check — none of which a self-round-trip would test.
-
-- **[`mnist-training/`](mnist-training/)** — does TMCore reproduce published FPTM end to end?
-  Trained from scratch on full MNIST it reaches **0.9769** against the published model's 0.9809, and
-  reproduces the characteristic clause-size overshoot (median 16, max 46, under `L`=10) that a wrong
-  feedback rule would not. The 0.4-point gap is provenance, not defect: the shipped model is the
-  best of 512 checkpoints over 1000 epochs, then a pairwise merge, both selected on test accuracy —
-  so it is an optimistically biased number, and merging is also why its clauses are larger.
-  `include_limit` and longer training were both ruled out as explanations.
-
-- **[`tmcore-differential/`](tmcore-differential/)** — does TMCore's bit-packed evaluator match
-  FuzzyPatternTM's index-list one? **Exactly**: 4,000,000 comparisons on the published model, zero
-  mismatches, and the satisfied mask decodes to the naive recomputation with zero disagreements.
-  `FlatLF` diverges on exactly 20,000 comparisons — 2 clause slots x 10,000 inputs, precisely the
-  band `ceiling-divergence/` predicted — which confirms the ceiling policy reaches the evaluator
-  rather than being silently ignored.
-
-- **[`ceiling-divergence/`](ceiling-divergence/)** — how far does Tsetlin.jl's flat-`LF` ceiling
-  depart from the paper's `min(n, LF)`? **Prediction held**: 2 of 400 clause slots in the divergence
-  band, 0.40% of aggregate ceiling mass, so flat `LF` is a safe fast path at convergence. Unplanned
-  finding: `L` is a growth gate rather than a cap — `L`=10 with clauses holding 12 to 54 literals.
-
-## Queued
-
-- **message-symbol aliasing** — the residual from `aliasing/`. Cyclic-shift binding correlates
-  message codes, so the independence assumption fails and the existing result is optimistic there.
-  Needed before message passing, not before.
+The question — what did this model learn that the data alone does not say — is unanswered. Any future
+attempt must clear the control in `ranking-confound/`.
 
 ## Data
 
-Datasets and downloaded models live in `/data/` and `/models/` at the repo root, both gitignored.
-Nothing large or externally sourced gets committed; record provenance in the experiment's README
-instead.
+Datasets and downloaded models live in gitignored `/data/` and `/models/`.
