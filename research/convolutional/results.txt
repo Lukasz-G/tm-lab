@@ -1,0 +1,37 @@
+============================================================================================
+Stage 3 — convolutional FPTM: per-node evaluation, zero message rounds
+============================================================================================
+MNIST 28x28, patch 10, stride 2 -> 100 patches of 118 bits (100 pixel + 18 position)
+40 clauses/class, T 10, S 125, L 10, LF 5, 10000 train, 15 epochs, 3 seeds
+
+building patches ... done
+arm                          accuracy (per seed)
+--------------------------------------------------------------------------------------------
+flat FPTM  [baseline]        seed 20260908  0.9516   (4 s)
+flat FPTM  [baseline]        seed 11  0.9486   (4 s)
+flat FPTM  [baseline]        seed 12  0.9512   (3 s)
+conv, max, random patch      seed 20260908  0.9716   (92 s)
+conv, max, random patch      seed 11  0.9715   (71 s)
+conv, max, random patch      seed 12  0.9730   (70 s)
+conv, max, argmax patch      seed 20260908  0.9726   (68 s)
+conv, max, argmax patch      seed 11  0.9710   (69 s)
+conv, max, argmax patch      seed 12  0.9692   (68 s)
+conv, sum, argmax patch      seed 20260908  0.9699   (68 s)
+conv, sum, argmax patch      seed 11  0.9674   (68 s)
+conv, sum, argmax patch      seed 12  0.9675   (69 s)
+conv, max, random, s matched seed 20260908  0.9703   (72 s)
+conv, max, random, s matched seed 11  0.9707   (69 s)
+conv, max, random, s matched seed 12  0.9675   (65 s)
+conv, max, argmax, s matched seed 20260908  0.9716   (65 s)
+conv, max, argmax, s matched seed 11  0.9704   (65 s)
+conv, max, argmax, s matched seed 12  0.9713   (65 s)
+
+============================================================================================
+flat FPTM  [baseline]        mean 0.9505   +0.0000 vs flat
+conv, max, random patch      mean 0.9720   +0.0216 vs flat
+conv, max, argmax patch      mean 0.9709   +0.0205 vs flat
+conv, sum, argmax patch      mean 0.9683   +0.0178 vs flat
+conv, max, random, s matched mean 0.9695   +0.0190 vs flat
+conv, max, argmax, s matched mean 0.9711   +0.0206 vs flat
+
+Gate: a conv arm must beat flat FPTM at the same clause count on identical booleanization.

@@ -1,0 +1,25 @@
+============================================================================================
+Stage 3 — convolutional FPTM: per-node evaluation, zero message rounds
+============================================================================================
+MNIST 28x28, patch 10, stride 1 -> 361 patches of 136 bits (100 pixel + 36 position)
+40 clauses/class, T 10, S 125, L 10, LF 5, 10000 train, 8 epochs, 1 seeds
+
+building patches ... done
+arm                          accuracy (per seed)
+--------------------------------------------------------------------------------------------
+flat FPTM  [baseline]        seed 20260908  0.9449   (3 s)
+conv, max, random patch      seed 20260908  0.9733   (180 s)
+conv, max, argmax patch      seed 20260908  0.9712   (149 s)
+conv, sum, argmax patch      seed 20260908  0.9629   (148 s)
+conv, max, random, s matched seed 20260908  0.9702   (150 s)
+conv, max, argmax, s matched seed 20260908  0.9732   (152 s)
+
+============================================================================================
+flat FPTM  [baseline]        mean 0.9449   +0.0000 vs flat
+conv, max, random patch      mean 0.9733   +0.0284 vs flat
+conv, max, argmax patch      mean 0.9712   +0.0263 vs flat
+conv, sum, argmax patch      mean 0.9629   +0.0180 vs flat
+conv, max, random, s matched mean 0.9702   +0.0253 vs flat
+conv, max, argmax, s matched mean 0.9732   +0.0283 vs flat
+
+Gate: a conv arm must beat flat FPTM at the same clause count on identical booleanization.

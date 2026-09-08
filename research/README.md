@@ -20,6 +20,19 @@ Upstream implementations are cloned on demand by [`upstream.jl`](upstream.jl) in
 | [`format-crosscheck`](format-crosscheck/) | independent Python reader reproduces every score exactly |
 | [`pileup-verify`](pileup-verify/) | TMCore and FuzzyPatternTM agree to within 1pp on automaton distributions |
 
+## Track E — Stage 3
+
+[`convolutional`](convolutional/) — per-node evaluation, no messages. **Beats flat FPTM by +0.0216
+at the same clause count** (0.9720 vs 0.9505, stride 2), rising to +0.028 at stride 1. The gate is
+met; this is the first result here that improves on the baseline.
+
+Stride nearly produced a false negative: at stride 4 (25 patches) convolution *loses* by 0.0015. A
+coarse stride removes the mechanism rather than mildly weakening it.
+
+Of the two undecided semantics it forces: fuzzy OR across nodes should be **max**, not sum; credit
+assignment has **no stable answer** — random and argmax trade places across configurations, both
+within a few thousandths.
+
 ## Findings about FPTM
 
 | | result |

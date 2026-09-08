@@ -6,9 +6,12 @@ Decisions before code, gates that can fail, negative results kept.
 ## Status, honestly
 
 A working substrate, verified against the reference implementation several ways, plus a handful of
-undocumented facts about FPTM. **No improvement on the published design.** Every algorithmic variant
-tried so far has lost, and the one positive interpretability result was retracted after its control
-was run. The graph and regression tracks are untouched.
+undocumented facts about FPTM.
+
+**One improvement so far:** a convolutional FPTM — per-patch evaluation, no message passing — beats
+flat FPTM by **+0.0216** at the same clause count and identical booleanization. Every *algorithmic*
+variant tried has lost, and one positive interpretability result was retracted after its control was
+run. Message passing and regression are untouched.
 
 ## Packages
 
@@ -59,6 +62,16 @@ One mechanism explains all of them: each reduces a clause's tolerance, so it sto
 redundant literals that let it degrade on noisy input. Effect sizes scale with task difficulty.
 
 Interpretability is unresolved. See [research/](research/).
+
+## What did work
+
+Convolutional evaluation — cutting the image into patches, evaluating each clause on every patch and
+taking the **max** — beats flat FPTM by +0.0216 at 40 clauses per class (0.9720 vs 0.9505), rising to
++0.028 with a finer stride.
+
+The result nearly came out backwards: at stride 4, giving only 25 patch positions, convolution
+*loses*. Matching a pattern "somewhere" is worth nothing when there are few somewheres, so a stride
+chosen for speed removed the mechanism under test rather than mildly weakening it.
 
 ## Getting started
 
