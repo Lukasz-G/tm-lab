@@ -1,0 +1,29 @@
+==============================================================================================
+Do learned messages beat a fixed neighbourhood window?
+==============================================================================================
+alphabet 32, length 12, A=1:4 B=5:8, 8000 train, 4000 test, 20 clauses, 25 epochs, 3 seeds
+class balance 0.498 positive
+max symbol-presence difference between classes: 0.0189
+
+arm                                accuracy (per seed)
+----------------------------------------------------------------------------------------------
+no messages        [control]       seed 20260908  0.5058   (4 s)
+no messages        [control]       seed 11  0.5108   (3 s)
+no messages        [control]       seed 12  0.5082   (4 s)
+identity messages  [ceiling]       seed 20260908  1.0000   (4 s)
+identity messages  [ceiling]       seed 11  1.0000   (3 s)
+identity messages  [ceiling]       seed 12  1.0000   (3 s)
+random messages    [control]       seed 20260908  0.9233   msg bits live 0.054, msg literals used 129  (9 s)
+random messages    [control]       seed 11  0.9980   msg bits live 0.050, msg literals used 127  (7 s)
+random messages    [control]       seed 12  0.9357   msg bits live 0.060, msg literals used 130  (8 s)
+LEARNED messages                   seed 20260908  1.0000   msg bits live 0.115, msg literals used 113  (8 s)
+LEARNED messages                   seed 11  1.0000   msg bits live 0.246, msg literals used 128  (8 s)
+LEARNED messages                   seed 12  1.0000   msg bits live 0.308, msg literals used 126  (8 s)
+
+==============================================================================================
+no messages        [control]       mean 0.5082   (node width 32)
+identity messages  [ceiling]       mean 1.0000   (node width 96)
+random messages    [control]       mean 0.9523   (node width 72)
+LEARNED messages                   mean 1.0000   (node width 72)
+
+LEARNED must beat RANDOM, or the channel is doing the work and learning is decoration.

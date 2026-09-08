@@ -42,6 +42,12 @@ symbols — which is functionally a 3-gram window. Learned messages, the thing t
 GraphTM, are Stage 5 and untested. This shows the machinery works end to end, not that graph
 structure earns its keep.
 
+[`learned-messages`](learned-messages/) — do **learned** messages beat a fixed channel? Yes, on a
+task where the channel is too narrow to carry raw features. Learned reaches 1.0000 on 3/3 seeds at
+72 bits of node width, matching the 96-bit identity ceiling; a random channel of the same width
+reaches 0.9523 and varies by seed. The random control is what makes this readable — without it,
+"learned messages work" is indistinguishable from "any 40-bit channel works".
+
 ## Findings about FPTM
 
 | | result |
