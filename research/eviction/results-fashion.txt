@@ -1,0 +1,21 @@
+============================================================================================
+Eviction redesign on FASHION — can confidence and plasticity coexist?
+============================================================================================
+40 clauses/class, T 10, S 125, L 10, LF 5, 20 epochs, 3 seeds, width 784
+
+arm                            accuracy           lits med/max   state med/max   >thr
+--------------------------------------------------------------------------------------------
+reference (gate + step)        0.8584 (sd 0.0009)    14 /  34    128 /157    17.4%
+partial freeze + step          0.7461 (sd 0.0041)    20 / 179    255 /255    95.4%
+partial freeze + reset         0.8572 (sd 0.0008)    15 /  33    137 /255    86.9%
+partial freeze + prop 0.25     0.8386 (sd 0.0022)    12 /  23    255 /255    98.9%
+partial freeze + prop 0.50     0.8244 (sd 0.0010)    12 /  20    255 /255    98.3%
+
+============================================================================================
+reference (gate + step)        +0.0000 vs reference
+partial freeze + step          -0.1123 vs reference
+partial freeze + reset         -0.0012 vs reference
+partial freeze + prop 0.25     -0.0198 vs reference
+partial freeze + prop 0.50     -0.0340 vs reference
+
+A win needs both: accuracy at or near the reference AND '>thr' well above its ~6%.

@@ -1,0 +1,21 @@
+============================================================================================
+Eviction redesign on MNIST — can confidence and plasticity coexist?
+============================================================================================
+40 clauses/class, T 10, S 125, L 10, LF 5, 20 epochs, 5 seeds, width 784
+
+arm                            accuracy           lits med/max   state med/max   >thr
+--------------------------------------------------------------------------------------------
+reference (gate + step)        0.9713 (sd 0.0005)    16 /  59    128 /137     6.7%
+partial freeze + step          0.8045 (sd 0.0081)    26 /  98    255 /255    98.2%
+partial freeze + reset         0.9715 (sd 0.0011)    16 /  49    145 /255    94.0%
+partial freeze + prop 0.25     0.9508 (sd 0.0014)    12 /  26    229 /255    98.5%
+partial freeze + prop 0.50     0.9224 (sd 0.0022)    12 /  17    225 /255    96.3%
+
+============================================================================================
+reference (gate + step)        +0.0000 vs reference
+partial freeze + step          -0.1668 vs reference
+partial freeze + reset         +0.0003 vs reference
+partial freeze + prop 0.25     -0.0204 vs reference
+partial freeze + prop 0.50     -0.0489 vs reference
+
+A win needs both: accuracy at or near the reference AND '>thr' well above its ~6%.

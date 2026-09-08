@@ -15,6 +15,18 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
 
 ## Answered
 
+- **[`eviction/`](eviction/)** — can a clause have a size limit *and* a confidence gradient? **Yes,
+  via reset eviction, for 0 to 0.4 accuracy points.** In a reference-trained FPTM every included
+  automaton sits on the include threshold, so confidence-based ideas are dead on arrival. The cause
+  is that `GrowthGate` freezes the only force that can raise an included automaton. Unfreezing it
+  naively costs 16.9 points, because eviction is a fixed step and a saturated literal needs 127 hits
+  to leave instead of 1 — confidence and forgetting are the same dial. Making eviction *reset* a
+  literal below the threshold breaks the coupling: the gradient appears (6.7% → 94% above threshold
+  on MNIST) at +0.0003 / −0.0012 / −0.0040 on MNIST / Fashion / CIFAR.
+
+- **[`partial-freeze/`](partial-freeze/)** — the failed first attempt, kept because its failure is
+  what identified the mechanism.
+
 - **[`trackd-replication/`](trackd-replication/)** — do the Track D conclusions survive other
   datasets? **Direction yes — 15 of 15 dataset-variant combinations, every seed, across MNIST,
   Fashion-MNIST and CIFAR-10.** Magnitude no: effects vary fivefold and are ordered by task

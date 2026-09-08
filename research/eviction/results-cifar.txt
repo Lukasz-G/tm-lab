@@ -1,0 +1,21 @@
+============================================================================================
+Eviction redesign on CIFAR — can confidence and plasticity coexist?
+============================================================================================
+40 clauses/class, T 10, S 125, L 10, LF 5, 20 epochs, 3 seeds, width 2048
+
+arm                            accuracy           lits med/max   state med/max   >thr
+--------------------------------------------------------------------------------------------
+reference (gate + step)        0.3313 (sd 0.0026)    13 /  24    128 /236    21.9%
+partial freeze + step          0.1605 (sd 0.0064)    18 /  42    254 /255    69.9%
+partial freeze + reset         0.3272 (sd 0.0026)    14 /  24    130 /255    69.3%
+partial freeze + prop 0.25     0.2796 (sd 0.0050)    11 /  19    207 /255    98.7%
+partial freeze + prop 0.50     0.2499 (sd 0.0053)    11 /  18    177 /255    98.2%
+
+============================================================================================
+reference (gate + step)        +0.0000 vs reference
+partial freeze + step          -0.1708 vs reference
+partial freeze + reset         -0.0040 vs reference
+partial freeze + prop 0.25     -0.0517 vs reference
+partial freeze + prop 0.50     -0.0814 vs reference
+
+A win needs both: accuracy at or near the reference AND '>thr' well above its ~6%.
