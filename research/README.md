@@ -15,6 +15,14 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
 
 ## Answered
 
+- **[`literal-ranking/`](literal-ranking/)** — can the confidence gradient make an unreadable clause
+  readable? **No.** On IMDb the gradient *saturates* (median state 255, 99.9% at the ceiling) because
+  clauses fire on 78% of documents and reinforcement pins them at max — MNIST clauses fire on ~9%,
+  which is why a spread appeared there. So reset eviction yields a usable gradient only for
+  infrequently-firing clauses. The frequency baseline is no better (every truncation at P≈0.50):
+  both signals measure *how often a literal holds*, not *how much it separates classes*, which is
+  the real flaw. A discriminative score needs no gradient and was not tried.
+
 - **[`pileup-verify/`](pileup-verify/)** — is the automaton pile-up real in Hnilov's code, and is
   `L` the cause? **Yes to both.** Trained with FuzzyPatternTM itself: at `L`=10 its included automata
   sit at median exactly 128 with only 8.1% above the threshold (TMCore: 128, 7.7%); at `L`=100000

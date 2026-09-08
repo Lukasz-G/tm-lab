@@ -1,0 +1,101 @@
+============================================================================================
+Can a confidence gradient make an unreadable IMDb clause readable?
+============================================================================================
+12800 features, 25000 train, 25000 test, T 18 S 1000 L 64 LF 64, 20 epochs
+
+accuracy 0.8985  (published reference 0.9015; imdb-readability got 0.9012 without reset)
+included automata: median 255, max 255, 99.9% above the threshold
+
+============================================================================================
+TRUNCATION: does a short rule keep the full rule's precision?
+============================================================================================
+Ranking by automaton state (needs the gradient) vs by satisfaction frequency (does not).
+
+
+--- NEGATIVE sentiment, for clause 1: 3609 literals, fires 20821/25000 ---
+    full rule: matches 0 docs, P(class) = NaN
+    top-N  ranked by CONFIDENCE         ranked by FREQUENCY         
+    5      matches 24618  P 0.506      matches 24992  P 0.500
+    10     matches 23630  P 0.514      matches 24992  P 0.500
+    20     matches 23020  P 0.521      matches 24986  P 0.500
+    50     matches 21874  P 0.532      matches 24959  P 0.501
+    200    matches 12888  P 0.623      matches 24721  P 0.504
+    top 12 by confidence:
+      NOT "'n' roll"  (state 255, satisfied 20816/20821)
+      NOT "10 10"  (state 255, satisfied 20692/20821)
+      NOT "10 out"  (state 255, satisfied 20760/20821)
+      NOT "10 out of"  (state 255, satisfied 20762/20821)
+      NOT "11th"  (state 255, satisfied 20815/20821)
+      NOT "1920s"  (state 255, satisfied 20806/20821)
+      NOT "1953"  (state 255, satisfied 20800/20821)
+      NOT "1958"  (state 255, satisfied 20802/20821)
+      NOT "2005"  (state 255, satisfied 20725/20821)
+      NOT "7"  (state 255, satisfied 20304/20821)
+      NOT "7 10"  (state 255, satisfied 20708/20821)
+      NOT "7 10 br"  (state 255, satisfied 20811/20821)
+
+--- NEGATIVE sentiment, against clause 1: 4019 literals, fires 19376/25000 ---
+    full rule: matches 0 docs, P(class) = NaN
+    top-N  ranked by CONFIDENCE         ranked by FREQUENCY         
+    5      matches 24792  P 0.497      matches 24984  P 0.500
+    10     matches 23137  P 0.482      matches 24951  P 0.499
+    20     matches 22883  P 0.480      matches 24916  P 0.498
+    50     matches 20279  P 0.451      matches 24763  P 0.496
+    200    matches  4836  P 0.389      matches 23794  P 0.479
+    top 12 by confidence:
+      NOT "0"  (state 255, satisfied 19310/19376)
+      NOT "0 10"  (state 255, satisfied 19364/19376)
+      NOT "0 out"  (state 255, satisfied 19364/19376)
+      NOT "0 out of"  (state 255, satisfied 19364/19376)
+      NOT "0 out of 10"  (state 255, satisfied 19366/19376)
+      NOT "1"  (state 255, satisfied 18521/19376)
+      NOT "1 10"  (state 255, satisfied 19328/19376)
+      NOT "1 2"  (state 255, satisfied 19214/19376)
+      NOT "1 2 from"  (state 255, satisfied 19344/19376)
+      NOT "1 5"  (state 255, satisfied 19359/19376)
+      NOT "1 if"  (state 255, satisfied 19371/19376)
+      NOT "1 out"  (state 255, satisfied 19349/19376)
+
+--- POSITIVE sentiment, for clause 1: 3517 literals, fires 19499/25000 ---
+    full rule: matches 0 docs, P(class) = NaN
+    top-N  ranked by CONFIDENCE         ranked by FREQUENCY         
+    5      matches 23137  P 0.518      matches 24964  P 0.501
+    10     matches 23137  P 0.518      matches 24949  P 0.501
+    20     matches 21510  P 0.530      matches 24911  P 0.502
+    50     matches 19726  P 0.549      matches 24786  P 0.504
+    200    matches  1490  P 0.852      matches 23602  P 0.525
+    top 12 by confidence:
+      NOT "0"  (state 255, satisfied 19432/19499)
+      NOT "0 10"  (state 255, satisfied 19488/19499)
+      NOT "0 out of"  (state 255, satisfied 19487/19499)
+      NOT "0 out of 10"  (state 255, satisfied 19489/19499)
+      NOT "1"  (state 255, satisfied 18655/19499)
+      NOT "1 10"  (state 255, satisfied 19453/19499)
+      NOT "1 2"  (state 255, satisfied 19338/19499)
+      NOT "1 2 from"  (state 255, satisfied 19468/19499)
+      NOT "1 5"  (state 255, satisfied 19482/19499)
+      NOT "1 out"  (state 255, satisfied 19469/19499)
+      NOT "1 out of"  (state 255, satisfied 19471/19499)
+      NOT "1 out of 10"  (state 255, satisfied 19477/19499)
+
+--- POSITIVE sentiment, against clause 1: 3107 literals, fires 20407/25000 ---
+    full rule: matches 0 docs, P(class) = NaN
+    top-N  ranked by CONFIDENCE         ranked by FREQUENCY         
+    5      matches 24404  P 0.494      matches 24992  P 0.500
+    10     matches 23626  P 0.487      matches 24992  P 0.500
+    20     matches 23018  P 0.480      matches 24989  P 0.500
+    50     matches 20587  P 0.462      matches 24970  P 0.500
+    200    matches 11441  P 0.358      matches 24601  P 0.496
+    top 12 by confidence:
+      NOT "10 10"  (state 255, satisfied 20291/20407)
+      NOT "10 out"  (state 255, satisfied 20350/20407)
+      NOT "10 out of"  (state 255, satisfied 20352/20407)
+      NOT "10 out of 10"  (state 255, satisfied 20353/20407)
+      NOT "11"  (state 255, satisfied 20240/20407)
+      NOT "11th"  (state 255, satisfied 20401/20407)
+      NOT "18th"  (state 255, satisfied 20384/20407)
+      NOT "7"  (state 255, satisfied 19909/20407)
+      NOT "7 10"  (state 255, satisfied 20294/20407)
+      NOT "7 10 br"  (state 255, satisfied 20397/20407)
+      NOT "7 10 br br"  (state 255, satisfied 20397/20407)
+      NOT "7 out"  (state 255, satisfied 20350/20407)
