@@ -15,6 +15,13 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
 
 ## Answered
 
+- **[`confidence-payoff/`](confidence-payoff/)** — with a real gradient present, does weighting by
+  confidence help? **No.** Gradient + uniform cost is 0.9718; gradient + weighted is 0.9691
+  (calibrated) and 0.9704 (nominal), both below it. The original failure was not for want of
+  confidence — the rule is just bad, and this removes the explanation the earlier negatives could
+  hide behind. The gradient's *interpretability* use (ranking literals within a clause) is untouched
+  by this and remains the open route.
+
 - **[`eviction/`](eviction/)** — can a clause have a size limit *and* a confidence gradient? **Yes,
   via reset eviction, for 0 to 0.4 accuracy points.** In a reference-trained FPTM every included
   automaton sits on the include threshold, so confidence-based ideas are dead on arrival. The cause

@@ -1,0 +1,20 @@
+==========================================================================================
+Does the confidence gradient pay for itself?  (MNIST)
+==========================================================================================
+40 clauses/class, T 10, S 125, L 10, LF 5, 20 epochs, 3 seeds, width 784
+
+arm                                accuracy           threshold
+------------------------------------------------------------------------------------------
+A reference                        0.9712 (sd 0.0003)      0   (0 s/seed)
+B gradient, uniform cost           0.9718 (sd 0.0011)      0   (0 s/seed)
+C gradient, weighted calibrated    0.9691 (sd 0.0007)    142   (0 s/seed)
+D gradient, weighted at 191        0.9704 (sd 0.0014)    191   (0 s/seed)
+
+==========================================================================================
+A reference                        +0.0000 vs A     -0.0006 vs B
+B gradient, uniform cost           +0.0006 vs A     +0.0000 vs B
+C gradient, weighted calibrated    -0.0021 vs A     -0.0027 vs B
+D gradient, weighted at 191        -0.0009 vs A     -0.0014 vs B
+
+C or D above B: confidence is worth reading.  C or D above A: the chain beats the
+published design.  Neither above B: the gradient is decorative and this family is closed.
