@@ -1,0 +1,26 @@
+======================================================================================
+Track D replication on CIFAR
+======================================================================================
+40 clauses/class, T 10, S 125, L 10, LF 5, 20 epochs, 5 seeds
+
+train 20000, test 10000, width 2048 bits
+
+variant                          best (per seed)              mean    final   lits med/max
+--------------------------------------------------------------------------------------
+baseline  [published]          0.3296 0.3343 0.3299 0.3263 0.3287   0.3298 (sd 0.0029)  0.3270     13 /  26
+proportional feedback          0.3126 0.3071 0.3081 0.3052 0.3019   0.3070 (sd 0.0039)  0.3031     13 /  19
+proportional-idle              0.3092 0.3115 0.3072 0.3122 0.3069   0.3094 (sd 0.0024)  0.3002     12 /  27
+confidence-weighted miss cost  0.3171 0.3252 0.3291 0.3225 0.3248   0.3237 (sd 0.0044)  0.3215     11 /  19
+anneal LF 5->1, T rescaled     0.3154 0.3140 0.3160 0.3156 0.3174   0.3157 (sd 0.0012)  0.2544     11 /  14
+L gates Type II too            0.2471 0.2418 0.2452 0.2441 0.2550   0.2466 (sd 0.0051)  0.2257     21 /1947
+
+======================================================================================
+                               vs baseline    worse on
+proportional feedback            -0.0228 (se 0.0019)   5/5 seeds
+proportional-idle                -0.0204 (se 0.0016)   5/5 seeds
+confidence-weighted miss cost    -0.0060 (se 0.0021)   5/5 seeds
+anneal LF 5->1, T rescaled       -0.0141 (se 0.0017)   5/5 seeds
+L gates Type II too              -0.0831 (se 0.0030)   5/5 seeds
+
+MNIST reference, for comparison (30 epochs, from the original runs):
+  proportional -0.0042 | prop-idle -0.0040 | weighted -0.0028 | anneal -0.0050 | capII -0.1339

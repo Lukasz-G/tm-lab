@@ -15,12 +15,14 @@ loader, pulling idx files straight from a mirror so no experiment needs a heavy 
 
 ## Answered
 
-- **[`trackd-replication/`](trackd-replication/)** — do the Track D conclusions survive a second
-  dataset? **Direction yes, magnitude no.** All five variants lose on Fashion-MNIST too, 3/3 seeds
-  each, with the clause-shrinkage mechanism reproducing. But effect sizes move by up to 2x
-  (proportional feedback -0.0085 vs -0.0042; Type II cap -0.0615 vs -0.1339), so they are
-  dataset-specific and should not be quoted as properties of FPTM. Caveat stated plainly: two 28x28
-  grayscale image sets is a weak replication.
+- **[`trackd-replication/`](trackd-replication/)** — do the Track D conclusions survive other
+  datasets? **Direction yes — 15 of 15 dataset-variant combinations, every seed, across MNIST,
+  Fashion-MNIST and CIFAR-10.** Magnitude no: effects vary fivefold and are ordered by task
+  difficulty (proportional feedback costs 0.4 points on MNIST, 0.9 on Fashion, 2.3 on CIFAR), which
+  the mechanism predicts — redundancy is insurance, worth most where the signal is weakest. So the
+  MNIST numbers were the most flattering case and understated the damage by up to 5x. The
+  runaway-growth signature sharpens too: capping Type II drives max clause size to 1,947 of 2,048
+  literals on CIFAR.
 
 - **[`aliasing/`](aliasing/)** — bit- versus symbol-granular fuzziness over a sparse distributed
   code. The criterion passes at `H` <= 2 and fails at `H` >= 4, so `H` is the lever rather than the

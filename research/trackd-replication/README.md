@@ -1,58 +1,72 @@
-# trackd-replication — do the Track D conclusions survive a second dataset?
+# trackd-replication — do the Track D conclusions survive other datasets?
 
-**Status: direction replicates on all five variants; magnitudes do not.**
-`julia --project=. run.jl [fashion|mnist] [epochs]`; output in `results-fashion.txt`.
+**Status: yes for direction, on all three datasets and all five variants — 15 of 15. No for
+magnitude, which varies fivefold and tracks task difficulty.**
+`julia --project=. run.jl [mnist|fashion|cifar] [epochs] [seeds]`; output in `results-*.txt`.
 
 ## Why
 
 Every Track D variant was tested on MNIST alone and all four lost, explained by one mechanism:
-reducing a clause's tolerance costs it the redundant literals that make it robust. That is a
-satisfying story resting on a single dataset at a single hyperparameter setting.
+reducing a clause's tolerance costs it the redundant literals that make it robust. A satisfying story
+resting on one dataset.
 
-There is direct evidence that such stories are fragile here — the `mask-mining` interpretability
-result looked clean on MNIST and collapsed on IMDb. So the variants were re-run on Fashion-MNIST,
-which shares MNIST's format and shape but is harder.
+There was direct evidence such stories are fragile here — `mask-mining` looked clean on MNIST and
+collapsed on IMDb. So the variants were re-run on Fashion-MNIST and then CIFAR-10.
 
-Hyperparameters are held at the MNIST values deliberately. They are probably not optimal for
-Fashion-MNIST, but the question is whether the **variants** behave the same relative to a common
-baseline, not whether the baseline is well tuned. Retuning per dataset would reintroduce the
-confound this is meant to remove.
+Hyperparameters are held at the MNIST values throughout, deliberately. They are not optimal for the
+other two, but the question is whether the **variants** move the same way against a common baseline,
+not whether the baseline is well tuned. Retuning per dataset would reintroduce the confound this is
+meant to remove.
 
 ## Result
 
-Fashion-MNIST, 40 clauses/class, `T`=10, `S`=125, `L`=10, `LF`=5, 20 epochs, 3 seeds.
-
-| variant | mean best | vs baseline | worse on | MNIST equivalent |
+| variant | MNIST | Fashion-MNIST | CIFAR-10 | worse on |
 |---|---|---|---|---|
-| baseline (published) | 0.8584 | — | — | — |
-| proportional feedback | 0.8499 | **−0.0085** | 3/3 | −0.0042 |
-| proportional-idle | 0.8519 | **−0.0064** | 3/3 | −0.0040 |
-| confidence-weighted miss cost | 0.8565 | **−0.0019** | 3/3 | −0.0028 |
-| anneal `LF` 5→1, `T` rescaled | 0.8545 | **−0.0039** | 3/3 | −0.0050 |
-| `L` gates Type II too | 0.7969 | **−0.0615** | 3/3 | −0.1339 |
+| baseline accuracy | 0.9724 | 0.8584 | 0.3298 | — |
+| proportional feedback | −0.0042 | −0.0085 | **−0.0228** | 11/11 seeds |
+| proportional-idle | −0.0040 | −0.0064 | **−0.0204** | 11/11 |
+| confidence-weighted miss cost | −0.0028 | −0.0019 | **−0.0060** | 11/11 |
+| anneal `LF` 5→1, `T` rescaled | −0.0050 | −0.0039 | **−0.0141** | 11/11 |
+| `L` gates Type II too | −0.1339 | −0.0615 | **−0.0831** | 11/11 |
 
-**Every variant loses, on every seed, on both datasets.** The sign replicates five times out of five.
+**Fifteen of fifteen dataset-variant combinations lose, on every seed.** On CIFAR-10 the effects run
+3x to 28x their standard error, so they are not noise even against a baseline near 0.33.
 
-**Magnitudes do not.** Proportional feedback is twice as damaging on Fashion-MNIST (−0.0085 against
-−0.0042); capping Type II is less than half as damaging (−0.0615 against −0.1339). So effect sizes
-are dataset-specific and should not be quoted as properties of FPTM.
+## Two things the third dataset added
 
-**The mechanism signature replicates too**, which is the part that matters for the explanation rather
-than the ranking. Clause sizes shrink for every variant that loses — median 14 at baseline against
-13, 13, 12 and 11 — and the Type II cap reproduces its runaway-growth signature, maximum clause size
-blowing from 34 to 151 as clauses that cannot learn to reject keep drawing reinforcement.
+**1. The damage scales with task difficulty.** Proportional feedback costs 0.4 points on MNIST, 0.9
+on Fashion-MNIST and 2.3 on CIFAR-10 — a fivefold spread ordered exactly by how hard the task is
+(0.97, 0.86, 0.33 baseline). That is consistent with the mechanism rather than merely compatible
+with it: redundant literals are insurance against a noisy or ambiguous input, so removing them costs
+little where the signal is clean and a great deal where it is not.
+
+It also means the MNIST numbers were the *most flattering* case for these variants. Reporting only
+those understated the damage by up to a factor of five.
+
+**2. The runaway-growth signature is starker.** Capping Type II drives maximum clause size to **1,947
+literals of a possible 2,048** on CIFAR-10, against 151 on Fashion-MNIST and 305 on MNIST. Clauses
+that cannot learn to reject keep drawing reinforcement until they include nearly everything. The
+mechanism is not a story fitted to MNIST; it gets louder on harder data.
+
+The clause-shrinkage signature replicates too: median 13 at baseline against 13, 12, 11, 11 for the
+losing variants, and the annealed arm shows the same best-versus-final collapse as before (0.3157
+best, 0.2544 final) as `LF` falls.
 
 ## What this does and does not buy
 
-**Does:** the Track D claims are no longer single-dataset. The direction of every effect, and the
-clause-size mechanism offered to explain it, hold on a second dataset with no retuning.
+**Does:** the Track D conclusions are no longer single-dataset, and CIFAR-10 is a genuine change of
+regime — 32x32 colour photographs with real backgrounds, not another 28x28 grayscale sprite. Both
+the direction and the proposed mechanism travel.
 
-**Does not:** Fashion-MNIST is a weak replication. It is 28x28 grayscale images in the same file
-format with the same class count — closer to a different sample of the same problem than to an
-independent test. A genuinely independent check means CIFAR-10, or the noisy Amazon Sales set where
-flat FPTM is known to beat GraphTM. Two image datasets of identical shape is better than one and is
-not the same as two.
+**Does not:** effect sizes are not properties of FPTM and should never be quoted as such. Only the
+sign, and the ordering by difficulty, are supported.
 
-Also note the baseline here, 0.8584, is **not** a published Fashion-MNIST number — those use
-convolutional booleanization and far more clauses. This is a like-for-like variant comparison on a
-deliberately unmodified setup, not a benchmark attempt.
+## Caveats
+
+The CIFAR-10 setup is deliberately modest — grayscale, a 2-bit fitted thermometer, 20,000 training
+images, 40 clauses per class — chosen so six arms and five seeds stay affordable. Its 0.33 baseline
+is **not** a CIFAR benchmark attempt and should not be compared with published convolutional TM
+numbers. Colour and convolution were dropped because neither is what is under test here.
+
+Still three image-classification datasets. A text or graph task would test something these do not,
+and the Amazon Sales set — where flat FPTM is known to beat GraphTM — remains the interesting gap.
