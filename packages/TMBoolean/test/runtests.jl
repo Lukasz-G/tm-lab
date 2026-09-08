@@ -120,4 +120,8 @@ end
     @test_throws ArgumentError Thermometer(strategy = :nonsense)
 end
 
+include("test_convkernel.jl")
+
+include("test_ngram.jl")
+
 end

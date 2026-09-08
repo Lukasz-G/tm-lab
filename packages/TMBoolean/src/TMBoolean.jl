@@ -26,8 +26,9 @@ Two properties every encoder here must have:
 """
 module TMBoolean
 
-export Booleanizer, Thermometer,
-       fit!, refit!, transform, fit_transform!, isfitted, width, feature_names
+export Booleanizer, Thermometer, ConvKernel, NGram,
+       fit!, refit!, transform, fit_transform!, isfitted, width, feature_names,
+       responses, nresponses
 
 """
     Booleanizer
@@ -96,5 +97,7 @@ the call site.
 fit_transform!(b::Booleanizer, X) = (fit!(b, X); transform(b, X))
 
 include("thermometer.jl")
+include("convkernel.jl")
+include("ngram.jl")
 
 end # module TMBoolean
