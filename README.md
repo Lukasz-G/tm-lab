@@ -8,10 +8,11 @@ Decisions before code, gates that can fail, negative results kept.
 A working substrate, verified against the reference implementation several ways, plus a handful of
 undocumented facts about FPTM.
 
-**One improvement so far:** a convolutional FPTM — per-patch evaluation, no message passing — beats
-flat FPTM by **+0.0216** at the same clause count and identical booleanization. Every *algorithmic*
-variant tried has lost, and one positive interpretability result was retracted after its control was
-run. Message passing and regression are untouched.
+**Two things work.** A convolutional FPTM — per-patch evaluation, no message passing — beats flat
+FPTM by **+0.0216** at the same clause count and identical booleanization. And **learned messages
+beat a random channel of the same width**, on a synthetic task built so the channel cannot simply
+carry raw features. Every *algorithmic* variant tried has lost, one positive interpretability result
+was retracted after its control was run, and regression is untouched.
 
 ## Packages
 
@@ -65,13 +66,22 @@ Interpretability is unresolved. See [research/](research/).
 
 ## What did work
 
-Convolutional evaluation — cutting the image into patches, evaluating each clause on every patch and
-taking the **max** — beats flat FPTM by +0.0216 at 40 clauses per class (0.9720 vs 0.9505), rising to
-+0.028 with a finer stride.
+**Convolutional evaluation** — cutting the image into patches, evaluating each clause on every patch
+and taking the **max** — beats flat FPTM by +0.0216 at 40 clauses per class (0.9720 vs 0.9505),
+rising to +0.028 with a finer stride.
 
 The result nearly came out backwards: at stride 4, giving only 25 patch positions, convolution
 *loses*. Matching a pattern "somewhere" is worth nothing when there are few somewheres, so a stride
 chosen for speed removed the mechanism under test rather than mildly weakening it.
+
+**Learned messages** reach 1.0000 on 3/3 seeds where a *random* channel of the same width reaches
+0.9523 — on a synthetic sequence task where the message worth sending is one bit and carrying the
+neighbour's raw symbol would cost 32. The random control is the whole result: against a no-message
+baseline the margin looks like 0.49, against a random channel it is 0.048, and only the second
+number says anything about learning.
+
+Both results are single synthetic or single-dataset findings. Neither says message passing helps on
+a real problem.
 
 ## Getting started
 
