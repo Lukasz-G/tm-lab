@@ -1,0 +1,64 @@
+================================================================================================
+Graded messages at equal channel width: magnitude per clause, or more clauses?
+================================================================================================
+alphabet 32, length 10, 6000 train, 3000 test, 24 clauses/polarity, LF 5
+message bits per edge held at 24 in every message arm; node width 80
+20 epochs, 3 seeds
+
+------------------------------------------------------------------------------------------------
+PREDICATE  (A then B adjacent)   balance 0.507, max symbol-presence gap between classes 0.0280
+------------------------------------------------------------------------------------------------
+  no messages  [control]   seed 20260908  0.5237   (2 s)
+  no messages  [control]   seed 11  0.5240   (2 s)
+  no messages  [control]   seed 12  0.5147   (2 s)
+  identity     [ceiling]   seed 20260908  1.0000   (2 s)
+  identity     [ceiling]   seed 11  1.0000   (2 s)
+  identity     [ceiling]   seed 12  1.0000   (2 s)
+  binary   24 clauses x 1  seed 20260908  1.0000   source vote 1.33, ceiling min(13.58, 5)  (4 s)
+  binary   24 clauses x 1  seed 11  1.0000   source vote 1.17, ceiling min(13.79, 5)  (4 s)
+  binary   24 clauses x 1  seed 12  1.0000   source vote 1.63, ceiling min(13.33, 5)  (4 s)
+  graded   12 clauses x 2  seed 20260908  1.0000   source vote 1.12, ceiling min(15.42, 5)  (4 s)
+  graded   12 clauses x 2  seed 11  1.0000   source vote 1.19, ceiling min(16.25, 5)  (4 s)
+  graded   12 clauses x 2  seed 12  1.0000   source vote 1.11, ceiling min(13.67, 5)  (4 s)
+  graded    6 clauses x 4  seed 20260908  0.7153   source vote 1.06, ceiling min(15.33, 5)  (4 s)
+  graded    6 clauses x 4  seed 11  1.0000   source vote 1.10, ceiling min(14.17, 5)  (4 s)
+  graded    6 clauses x 4  seed 12  0.9200   source vote 1.06, ceiling min(13.67, 5)  (5 s)
+
+------------------------------------------------------------------------------------------------
+MAGNITUDE  (overlap >=3 with P then Q)   balance 0.498, max symbol-presence gap between classes 0.0247
+------------------------------------------------------------------------------------------------
+  no messages  [control]   seed 20260908  0.5070   (2 s)
+  no messages  [control]   seed 11  0.5173   (2 s)
+  no messages  [control]   seed 12  0.5100   (2 s)
+  identity     [ceiling]   seed 20260908  0.9830   (2 s)
+  identity     [ceiling]   seed 11  0.9887   (2 s)
+  identity     [ceiling]   seed 12  0.9873   (2 s)
+  binary   24 clauses x 1  seed 20260908  1.0000   source vote 1.45, ceiling min(13.00, 5)  (5 s)
+  binary   24 clauses x 1  seed 11  0.9997   source vote 1.33, ceiling min(13.21, 5)  (4 s)
+  binary   24 clauses x 1  seed 12  0.9997   source vote 1.41, ceiling min(12.33, 5)  (4 s)
+  graded   12 clauses x 2  seed 20260908  1.0000   source vote 1.18, ceiling min(12.75, 5)  (4 s)
+  graded   12 clauses x 2  seed 11  0.9987   source vote 1.32, ceiling min(12.83, 5)  (4 s)
+  graded   12 clauses x 2  seed 12  0.9883   source vote 1.22, ceiling min(13.25, 5)  (4 s)
+  graded    6 clauses x 4  seed 20260908  0.9993   source vote 1.30, ceiling min(16.50, 5)  (4 s)
+  graded    6 clauses x 4  seed 11  0.9957   source vote 1.13, ceiling min(12.83, 5)  (4 s)
+  graded    6 clauses x 4  seed 12  0.9347   source vote 1.30, ceiling min(13.00, 5)  (5 s)
+
+================================================================================================
+SUMMARY
+================================================================================================
+PREDICATE  (A then B adjacent)
+  no messages  [control]    mean 0.5208
+  identity     [ceiling]    mean 1.0000
+  binary   24 clauses x 1   mean 1.0000
+  graded   12 clauses x 2   mean 1.0000
+  graded    6 clauses x 4   mean 0.8784
+
+MAGNITUDE  (overlap >=3 with P then Q)
+  no messages  [control]    mean 0.5114
+  identity     [ceiling]    mean 0.9863
+  binary   24 clauses x 1   mean 0.9998
+  graded   12 clauses x 2   mean 0.9957
+  graded    6 clauses x 4   mean 0.9766
+
+Read the PREDICATE task first. Graded resolution has nothing to encode there, so if it
+wins anyway the arms differ in something other than what this script claims to vary.

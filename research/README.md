@@ -48,6 +48,14 @@ task where the channel is too narrow to carry raw features. Learned reaches 1.00
 reaches 0.9523 and varies by seed. The random control is what makes this readable — without it,
 "learned messages work" is indistinguishable from "any 40-bit channel works".
 
+[`graded-messages`](graded-messages/) — thermometer-encoding the vote into `k` levels, the
+most-cited unexplored idea in the fuzzy/graph combination. **It loses**, at equal channel width,
+on both a task where the message is a predicate and one built so the message is a magnitude, and
+monotonically in `k`. Source clauses hold 12–16 literals so the full 1–5 range was on offer, but
+firing votes average 1.1–1.6, leaving the upper thermometer bits dead. A side result: binary
+learned messages beat the identity *ceiling* there, because identity copies the neighbour while a
+learned message computes.
+
 ## Findings about FPTM
 
 | | result |

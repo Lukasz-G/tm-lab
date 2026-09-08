@@ -59,6 +59,11 @@ Five algorithmic variants — vote-proportional feedback, confidence-weighted mi
 capping `L`, and confidence-weighted evaluation on a repaired gradient. All lose, on
 **15 of 15 dataset-variant combinations** across MNIST, Fashion-MNIST and CIFAR-10, every seed.
 
+**Graded messages** lose too — thermometer-encoding a clause vote into `k` levels, compared at equal
+channel width against spending the same bits on `k` times as many clauses. Worse as `k` grows, on
+both a task where the message is a predicate and one built so it is a magnitude. Firing votes average
+1.1–1.6 out of an available 5, so the upper thermometer bits are dead.
+
 One mechanism explains all of them: each reduces a clause's tolerance, so it stops accumulating the
 redundant literals that let it degrade on noisy input. Effect sizes scale with task difficulty.
 
@@ -79,6 +84,10 @@ chosen for speed removed the mechanism under test rather than mildly weakening i
 neighbour's raw symbol would cost 32. The random control is the whole result: against a no-message
 baseline the margin looks like 0.49, against a random channel it is 0.048, and only the second
 number says anything about learning.
+
+On a second task, learned messages beat the *identity* arm (0.9998 vs 0.9863) — the arm that copies
+the neighbour's raw features and was the ceiling everywhere else. When the useful message is a
+computation rather than a copy, computing it before sending wins.
 
 Both results are single synthetic or single-dataset findings. Neither says message passing helps on
 a real problem.
