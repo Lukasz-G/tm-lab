@@ -24,7 +24,8 @@ Upstream implementations are cloned on demand by [`upstream.jl`](upstream.jl) in
 
 [`convolutional`](convolutional/) — per-node evaluation, no messages. **Beats flat FPTM by +0.0216
 at the same clause count** (0.9720 vs 0.9505, stride 2), rising to +0.028 at stride 1. The gate is
-met; this is the first result here that improves on the baseline.
+met. **On CIFAR-10 it reverses**, losing to flat by 0.0429 — see
+[`cifar-messages`](cifar-messages/). The MNIST win is MNIST's.
 
 Stride nearly produced a false negative: at stride 4 (25 patches) convolution *loses* by 0.0015. A
 coarse stride removes the mechanism rather than mildly weakening it.
@@ -46,7 +47,15 @@ structure earns its keep.
 task where the channel is too narrow to carry raw features. Learned reaches 1.0000 on 3/3 seeds at
 72 bits of node width, matching the 96-bit identity ceiling; a random channel of the same width
 reaches 0.9523 and varies by seed. The random control is what makes this readable — without it,
-"learned messages work" is indistinguishable from "any 40-bit channel works".
+"learned messages work" is indistinguishable from "any 40-bit channel works". **It does not
+transfer to CIFAR-10** ([`cifar-messages`](cifar-messages/)).
+
+[`cifar-messages`](cifar-messages/) — the same two mechanisms on a real dataset, which is what every
+result above lacks. Convolution **loses** to flat by 0.0429, and learned messages contribute nothing:
+their +0.0141 over convolution is three-quarters reproduced by a channel wired permanently to zero,
+because 32 dead bits still inflate clause literal counts and move the `L` growth gate. The learned
+channel is 0.001 live here against 0.115–0.308 on the synthetic task — it collapsed, and the accuracy
+gain arrived anyway, which is what made the dead-channel control necessary rather than optional.
 
 [`graded-messages`](graded-messages/) — thermometer-encoding the vote into `k` levels, the
 most-cited unexplored idea in the fuzzy/graph combination. **It loses**, at equal channel width,

@@ -8,11 +8,15 @@ Decisions before code, gates that can fail, negative results kept.
 A working substrate, verified against the reference implementation several ways, plus a handful of
 undocumented facts about FPTM.
 
-**Two things work.** A convolutional FPTM — per-patch evaluation, no message passing — beats flat
-FPTM by **+0.0216** at the same clause count and identical booleanization. And **learned messages
-beat a random channel of the same width**, on a synthetic task built so the channel cannot simply
-carry raw features. Every *algorithmic* variant tried has lost, one positive interpretability result
-was retracted after its control was run, and regression is untouched.
+**Two things work, and neither survives a change of dataset.** A convolutional FPTM — per-patch
+evaluation, no message passing — beats flat FPTM by **+0.0216** on MNIST at the same clause count,
+and **loses by 0.0429 on CIFAR-10**. Learned messages beat a random channel of the same width on a
+synthetic task built for them, and contribute nothing on CIFAR-10 once a dead-channel control is run.
+Every *algorithmic* variant tried has lost, one positive interpretability result was retracted after
+its control was run, and regression is untouched.
+
+The pattern across this repo is that results survive their own controls and then fail on the second
+dataset.
 
 ## Packages
 
@@ -73,25 +77,28 @@ redundant literals that let it degrade on noisy input. Effect sizes scale with t
 
 Interpretability is unresolved. See [research/](research/).
 
-## What did work
+## What worked, and where it stopped
 
 **Convolutional evaluation** — cutting the image into patches, evaluating each clause on every patch
-and taking the **max** — beats flat FPTM by +0.0216 at 40 clauses per class (0.9720 vs 0.9505),
-rising to +0.028 with a finer stride.
+and taking the **max** — beats flat FPTM by +0.0216 on MNIST at 40 clauses per class (0.9720 vs
+0.9505), rising to +0.028 with a finer stride. It nearly came out backwards there too: at stride 4,
+giving only 25 patch positions, convolution *loses*, because matching a pattern "somewhere" is worth
+nothing when there are few somewheres.
 
-The result nearly came out backwards: at stride 4, giving only 25 patch positions, convolution
-*loses*. Matching a pattern "somewhere" is worth nothing when there are few somewheres, so a stride
-chosen for speed removed the mechanism under test rather than mildly weakening it.
+**On CIFAR-10 it loses to flat by 0.0429.** The MNIST result is MNIST's.
 
 **Learned messages** reach 1.0000 on 3/3 seeds where a *random* channel of the same width reaches
-0.9523 — on a synthetic sequence task where the message worth sending is one bit and carrying the
+0.9523, on a synthetic sequence task where the message worth sending is one bit and carrying the
 neighbour's raw symbol would cost 32. The random control is the whole result: against a no-message
-baseline the margin looks like 0.49, against a random channel it is 0.048, and only the second
-number says anything about learning.
+baseline the margin looks like 0.49, against a random channel it is 0.048. On a second synthetic task
+they beat even the *identity* arm that copies the neighbour's raw features, because computing the
+message before sending it beats copying.
 
-On a second task, learned messages beat the *identity* arm (0.9998 vs 0.9863) — the arm that copies
-the neighbour's raw features and was the ceiling everywhere else. When the useful message is a
-computation rather than a copy, computing it before sending wins.
+**On CIFAR-10 they contribute nothing.** Their +0.0141 over convolution is three-quarters reproduced
+by a channel wired permanently to zero — 32 dead bits still inflate clause literal counts and move
+the `L` growth gate, which is worth 13 points when it moves. The learned channel measures 0.001 live
+there against 0.115–0.308 on the synthetic task: it collapsed, and the gain arrived anyway. That is
+the arm to run before believing any of this.
 
 Both results are single synthetic or single-dataset findings. Neither says message passing helps on
 a real problem.

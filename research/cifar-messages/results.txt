@@ -1,0 +1,36 @@
+================================================================================================
+Message passing on CIFAR-10: does it beat convolution alone on real data?
+================================================================================================
+32x32 grayscale, 4 thermometer thresholds -> 4096 flat bits
+patch 8 stride 6 -> 25 patches; width 264 plain (256 pixel + 8 position), 296 with messages
+40 clauses/class, T 10, S 125, L 10, LF 5; 20000 train, 5000 test, 25 epochs, 3 seeds
+
+loading CIFAR-10 ... done
+arm                             accuracy per seed
+------------------------------------------------------------------------------------------------
+  flat FPTM      [baseline]      seed 20260908  0.3532   (62 s)
+  flat FPTM      [baseline]      seed 11  0.3552   (60 s)
+  flat FPTM      [baseline]      seed 12  0.3500   (60 s)
+  conv, no messages [control]    seed 20260908  0.3022   (64 s)
+  conv, no messages [control]    seed 11  0.3140   (64 s)
+  conv, no messages [control]    seed 12  0.3136   (63 s)
+  conv + DEAD channel [control]  seed 20260908  0.3236   (63 s)
+  conv + DEAD channel [control]  seed 11  0.3136   (63 s)
+  conv + DEAD channel [control]  seed 12  0.3254   (63 s)
+  conv + random msgs [control]   seed 20260908  0.3140   msg bits live 0.573  (117 s)
+  conv + random msgs [control]   seed 11  0.3208   msg bits live 0.666  (118 s)
+  conv + random msgs [control]   seed 12  0.3258   msg bits live 0.611  (116 s)
+  conv + LEARNED msgs            seed 20260908  0.3244   msg bits live 0.001  (114 s)
+  conv + LEARNED msgs            seed 11  0.3256   msg bits live 0.001  (111 s)
+  conv + LEARNED msgs            seed 12  0.3222   msg bits live 0.003  (106 s)
+
+================================================================================================
+flat FPTM      [baseline]      mean 0.3528   +0.0429 vs conv   (width 4096)
+conv, no messages [control]    mean 0.3099   +0.0000 vs conv   (width 264)
+conv + DEAD channel [control]  mean 0.3209   +0.0109 vs conv   (width 296)
+conv + random msgs [control]   mean 0.3202   +0.0103 vs conv   (width 296)
+conv + LEARNED msgs            mean 0.3241   +0.0141 vs conv   (width 296)
+
+The arm to beat is conv-without-messages, not flat. Beating flat only says patches help,
+which Stage 3 already established; beating the random-message arm is what says the
+learned channel carries something rather than merely widening the input.
