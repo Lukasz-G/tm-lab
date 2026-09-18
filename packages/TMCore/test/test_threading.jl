@@ -89,54 +89,90 @@ end
     @test predict(m, TMInput[]) == Int[]
 end
 
-@testset "clause parallelism is deterministic, and works where classes cannot" begin
-    # Two classes and a wide bank: `:classes` has almost nothing to spread here, which is the whole
-    # reason `:clauses` exists. Above PARALLEL_MIN_CLAUSES so the threaded branch is actually taken
-    # rather than silently falling back to the serial one.
-    rng = MersenneTwister(21)
-    X = [TMInput(rand(rng, Bool, 32)) for _ in 1:400]
-    Y = [x[1] ⊻ x[2] ? 1 : 2 for x in X]          # binary, and not linearly separable
-    mk2() = TMClassifier(Y, 32; clauses_per_class=200, T=12, S=20, L=10, LF=4)
-    @test 100 >= TMCore.PARALLEL_MIN_CLAUSES      # 200 per class splits into 100 per polarity
-
-    a, b = mk2(), mk2()
+@testset "clause parallelism is deterministic, on both sides of the work gate" begin
+    # `:clauses` decides once per epoch whether threading is worth it, and the two branches are
+    # different code. Both have to be deterministic, so both are exercised here rather than whichever
+    # one this machine's shape happens to select.
+    #
+    # The wide-input route to getting above the gate was abandoned deliberately. Padding a narrow
+    # signal out to 4096 bits made the task unlearnable, and for an instructive reason: the padding
+    # is constant, so every clause can include its negation for free, and those free literals fill
+    # the `L` growth gate before the real signal gets in — the same effect `research/cifar-messages/`
+    # measured. An arm that cannot learn says nothing about whether its threading is correct, so the
+    # gate is crossed with clause count instead.
+    Xs, Ys = toy(200, 24, 21)
+    below = () -> mk(Ys, 24)
+    @test !TMCore._worth_threading(below())
+    a, b = below(), below()
     for _ in 1:3
-        train!(a, X, Y; rng=MersenneTwister(4), parallel=:clauses)
-        train!(b, X, Y; rng=MersenneTwister(4), parallel=:clauses)
+        train!(a, Xs, Ys; rng=MersenneTwister(4), parallel=:clauses)
+        train!(b, Xs, Ys; rng=MersenneTwister(4), parallel=:clauses)
     end
     @test fingerprint(a) == fingerprint(b)
 
-    # Distinct from both other schedules, for the documented RNG-stream reason.
-    c = mk2()
-    train!(c, X, Y; rng=MersenneTwister(4), parallel=:none)
-    d = mk2()
-    train!(d, X, Y; rng=MersenneTwister(4), parallel=:classes)
-    e = mk2()
-    train!(e, X, Y; rng=MersenneTwister(4), parallel=:clauses)
-    @test fingerprint(c) != fingerprint(e)
-    @test fingerprint(d) != fingerprint(e)
+    Xl, Yl = toy(200, 256, 22)
+    above = () -> TMClassifier(Yl, 256; clauses_per_class=2800, T=12, S=16, L=10, LF=4)
+    @test TMCore._worth_threading(above())
+    c, d = above(), above()
+    for _ in 1:3
+        train!(c, Xl, Yl; rng=MersenneTwister(4), parallel=:clauses)
+        train!(d, Xl, Yl; rng=MersenneTwister(4), parallel=:clauses)
+    end
+    @test fingerprint(c) == fingerprint(d)
+
+    # Distinct from the other schedules, for the documented RNG-stream reason.
+    e, f = above(), above()
+    train!(e, Xl, Yl; rng=MersenneTwister(4), parallel=:none)
+    train!(f, Xl, Yl; rng=MersenneTwister(4), parallel=:classes)
+    @test fingerprint(e) != fingerprint(c)
+    @test fingerprint(f) != fingerprint(c)
 
     # And it must still learn: a race would usually still satisfy the inequalities above.
-    for m in (c, e)
-        for _ in 1:10
-            train!(m, X, Y; rng=MersenneTwister(2), parallel=(m === e ? :clauses : :none))
+    for _ in 1:5
+        train!(c, Xl, Yl; rng=MersenneTwister(2), parallel=:clauses)
+        train!(e, Xl, Yl; rng=MersenneTwister(2), parallel=:none)
+    end
+    ac, ae = accuracy(predict(c, Xl), Yl), accuracy(predict(e, Xl), Yl)
+    @test ac > 0.9 && ae > 0.9
+    @test abs(ac - ae) < 0.1              # different draws, not a different algorithm
+end
+
+@testset "batched scoring matches the serial score exactly" begin
+    rng = MersenneTwister(31)
+    X = [TMInput(rand(rng, Bool, 512)) for _ in 1:120]
+    Y = [x[1] ? 1 : (x[2] ? 2 : 3) for x in X]
+    m = TMClassifier(Y, 512; clauses_per_class=200, T=12, S=16, L=10, LF=4)
+    train!(m, X, Y; rng=MersenneTwister(1))
+
+    ncl = length(m.classes)
+    half = m.positive[1].nclauses
+    nchunk = TMCore._score_chunks(ncl, half)
+    pv, nv = zeros(Int, ncl), zeros(Int, ncl)
+    partial = zeros(Int, ncl * 2 * nchunk)
+    # Integer addition, so splitting a bank across chunks must reproduce the serial sum exactly, not
+    # approximately. A failure here means the chunk arithmetic drops or double-counts clauses — the
+    # kind of bug that would otherwise surface only as slightly wrong training.
+    for x in X[1:20]
+        TMCore._scores_threaded!(pv, nv, partial, m, x, nchunk)
+        for ci in 1:ncl
+            p, n = vote(m, ci, x)
+            @test pv[ci] == p
+            @test nv[ci] == n
+            @test pv[ci] - nv[ci] == score(m, ci, x)
         end
-        @test accuracy(predict(m, X), Y) > 0.9
     end
 end
 
-@testset "threaded bank_vote sums exactly" begin
-    rng = MersenneTwister(31)
-    X = [TMInput(rand(rng, Bool, 32)) for _ in 1:120]
-    Y = [x[1] ? 1 : 2 for x in X]
-    m = TMClassifier(Y, 32; clauses_per_class=200, T=12, S=20, L=10, LF=4)
-    train!(m, X, Y; rng=MersenneTwister(1))
-    # Integer addition, so chunking across threads must reproduce the serial sum exactly — not
-    # approximately. If this ever fails the chunk arithmetic is dropping or double-counting clauses.
-    for x in X[1:20]
-        @test TMCore._bank_vote_threaded(m.positive[1], x, m.params.LF, m.ceiling, m.misscost) ==
-              bank_vote(m.positive[1], x, m.params.LF, m.ceiling, m.misscost)
-    end
+@testset "the work gate scales with width, not just clause count" begin
+    # The bug this guards against: a threshold in clauses alone made the gate fire at the same clause
+    # count regardless of how much work a clause is, so a narrow model threaded when it should not.
+    narrow = TMClassifier([1, 2], 64; clauses_per_class=400, T=12, S=2, L=10, LF=4)
+    wide = TMClassifier([1, 2], 8192; clauses_per_class=400, T=12, S=248, L=10, LF=4)
+    @test !TMCore._worth_threading(narrow)
+    @test TMCore._worth_threading(wide)
+    # And no chunk may be trivially small, which is what turned a missing gate into a 5x slowdown.
+    @test TMCore._score_chunks(2, 10) == 1
+    @test TMCore._score_chunks(2, 1000) <= 1000 ÷ TMCore.MIN_CLAUSES_PER_CHUNK
 end
 
 @testset "shapes and guards" begin

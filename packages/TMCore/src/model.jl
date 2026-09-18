@@ -203,48 +203,48 @@ function update_class!(m::TMClassifier, ci::Integer, x::TMInput, positive::Bool,
 end
 
 """
-Below this many clauses a bank is not worth threading: `Threads.@threads` costs a task spawn per
-invocation, and the clause path spawns per example rather than per epoch, so on a small bank the
-spawns cost more than the work they distribute. Fixed rather than derived from `nthreads()`, because
-a threshold that moved with the thread count would make results depend on how Julia was launched.
+Minimum work, in **clause-chunk operations per example**, below which `:clauses` runs serially.
+
+A clause count alone cannot express this, which a downstream project found the hard way: their
+crossover sat near 1000 clauses per class at width 4,561 where ours sat near 400 at width 10,194.
+Same clause count, half the work per clause, same fixed cost per parallel region. The gate has to be
+in units of work, so it is `2 · nclasses · nclauses · nchunks` against this constant.
+
+Calibrated against measured break-even at two widths rather than reasoned from first principles, and
+it reproduces both: at width 4,561 it keeps 20 and 100 clauses/class serial (measured 0.20× and
+0.34×) and enables 500 and 1000 (1.42×, 2.28×); at width 10,194 it keeps 100 serial (1.01×, i.e.
+nothing lost) and enables 400 and 1000 (1.92×, 2.86×). Two machines and two widths is thin, so treat
+it as a floor that prevents pathological slowdowns rather than a tuned optimum — and measure at a new
+width before assuming a mode pays there.
 """
-const PARALLEL_MIN_CLAUSES = 64
+const PARALLEL_MIN_WORK = 32768
 
-"Sum of clause votes over a bank, split across threads. Integer addition, so the sum is exact and
-order-independent — this is bit-identical to `bank_vote`, not merely close to it."
-function _bank_vote_threaded(b::ClauseBank, x::TMInput, LF::Integer, policy::CeilingPolicy,
-                             cost::MissCostPolicy)
-    n = b.nclauses
-    n < PARALLEL_MIN_CLAUSES && return bank_vote(b, x, LF, policy, cost)
-    nt = min(Threads.nthreads(), n)
-    partial = zeros(Int, nt)
-    chunk = cld(n, nt)
-    Threads.@threads for t in 1:nt
-        acc = 0
-        @inbounds for j in ((t - 1) * chunk + 1):min(t * chunk, n)
-            acc += clause_vote(b, j, x, LF, policy, cost)
-        end
-        @inbounds partial[t] = acc
-    end
-    return sum(partial)
+"""
+Whether `:clauses` should thread at all for this model shape.
+
+Depends only on the model, so it is evaluated once per epoch rather than per example, and never on
+`nthreads()` — a gate that moved with the thread count would change results with the launch flag.
+"""
+@inline function _worth_threading(m::TMClassifier)
+    half = m.positive[1].nclauses
+    return 2 * nclasses(m) * half * m.positive[1].nchunks >= PARALLEL_MIN_WORK
 end
 
-@inline function _score_threaded(m::TMClassifier, ci::Integer, x::TMInput)
-    LF = m.params.LF
-    return _bank_vote_threaded(m.positive[ci], x, LF, m.ceiling, m.misscost) -
-           _bank_vote_threaded(m.negative[ci], x, LF, m.ceiling, m.misscost)
-end
+"Smallest number of clauses worth giving a scoring chunk. Without a floor, `_score_chunks` happily
+produced one chunk *per clause* on a small bank — 40 tasks to evaluate 40 clauses, which is how the
+missing gate below turned into a 5x slowdown rather than a wash."
+const MIN_CLAUSES_PER_CHUNK = 16
 
 """
 Chunks per bank for the batched scoring pass. Aimed at a few chunks per thread so the work divides
-evenly, and capped at the clause count so a small bank is not split into empty pieces.
+evenly, floored so no chunk is trivially small, and capped by the clause count.
 
 It depends on `nthreads()`, which is safe *here* and nowhere else in this file: the chunks are summed
 with integer addition, which is exact and order-independent, so the total is identical at any thread
 count. Anything touching the RNG must not take this liberty.
 """
 @inline _score_chunks(ncl::Int, half::Int) =
-    clamp(cld(4 * Threads.nthreads(), 2 * ncl), 1, half)
+    clamp(cld(4 * Threads.nthreads(), 2 * ncl), 1, max(1, half ÷ MIN_CLAUSES_PER_CHUNK))
 
 """
 Every class's positive and negative vote for one example, computed in a **single** parallel region.
@@ -307,22 +307,32 @@ concession — `score(m, ci, x)` reads only class `ci`'s own banks, so no class 
 update anyway — it is what lets the whole update phase be one parallel region.
 
 `upd` and `isp` are caller-owned scratch so this does not allocate per example.
+
+`par` gates **both** phases. An earlier version guarded only the update phase and left scoring
+unconditional, so a small model fell back to a serial update while still spawning a parallel region
+to score — which made the smallest configurations several times *slower* than `:none` instead of
+merely no faster. Scoring and updating are two halves of the same decision and must not be gated
+separately.
 """
 function update_example_clauses!(m::TMClassifier, x::TMInput, y,
                                  pos::Vector{Vector{R}}, neg::Vector{Vector{R}},
                                  upd::Vector{Float64}, isp::Vector{Bool},
                                  pv::Vector{Int}, nv::Vector{Int}, partial::Vector{Int},
-                                 nchunk::Int) where {R}
+                                 nchunk::Int, par::Bool) where {R}
     ncl = nclasses(m)
     half = m.positive[1].nclauses
-    _scores_threaded!(pv, nv, partial, m, x, nchunk)
-    @inbounds for ci in 1:ncl
-        isp[ci] = y == m.classes[ci]
-        upd[ci] = _update_fraction(m, pv[ci] - nv[ci], isp[ci])
-    end
 
-    total = ncl * 2 * half
-    if total < PARALLEL_MIN_CLAUSES
+    if par
+        _scores_threaded!(pv, nv, partial, m, x, nchunk)
+        @inbounds for ci in 1:ncl
+            isp[ci] = y == m.classes[ci]
+            upd[ci] = _update_fraction(m, pv[ci] - nv[ci], isp[ci])
+        end
+    else
+        @inbounds for ci in 1:ncl
+            isp[ci] = y == m.classes[ci]
+            upd[ci] = _update_fraction(m, score(m, ci, x), isp[ci])
+        end
         @inbounds for ci in 1:ncl
             typeI, typeII = _banks(m, ci, isp[ci])
             rI, rII = isp[ci] ? (pos[ci], neg[ci]) : (neg[ci], pos[ci])
@@ -335,6 +345,8 @@ function update_example_clauses!(m::TMClassifier, x::TMInput, y,
         end
         return nothing
     end
+
+    total = ncl * 2 * half
 
     Threads.@threads for k in 1:total
         @inbounds begin
@@ -403,24 +415,33 @@ flipping it would silently move every number already committed in `research/`.
 
 Julia must be started with threads (`julia -t auto`) for any of this to do anything.
 
-**What to expect, measured — not what the thread count suggests.** On a binary CIFAR-sized problem
-(width 10194, 4000 examples, 16 threads):
+**What to expect, measured — not what the thread count suggests.** 16 threads, binary, 3000 rows,
+speedup over `:none`, at two input widths:
 
-| clauses/class | `:classes` | `:clauses` |
-|---|---|---|
-| 100 | 2.1× | 1.0× |
-| 400 | 2.0× | 1.9× |
-| 1000 | 2.0× | **2.9×** |
+| clauses/class | width 4,561 `:classes` | `:clauses` | width 10,194 `:classes` | `:clauses` |
+|---|---|---|---|---|
+| 20 | 1.1× | 1.0× | — | — |
+| 100 | 2.0× | 1.0× | 1.9× | 1.1× |
+| 400–500 | 2.3× | 1.4× | 2.1× | 1.6× |
+| 1000 | 1.9× | 2.0× | 1.8× | **2.5×** |
 
-`:classes` is capped at roughly the class count, so on a binary model it stops at 2× however many
-threads there are. `:clauses` overtakes it once the bank is large enough to be worth splitting, and
-below `PARALLEL_MIN_CLAUSES` it deliberately does nothing.
+`:classes` is capped at roughly the class count, so on a binary model it stops near 2× however many
+threads there are. `:clauses` overtakes it only once there is real work per example, and **the
+crossover moves with input width**: at 4,561 it is still behind at 500 clauses per class where at
+10,194 it had already passed. Half the work per clause, same fixed cost per region. Measure at your
+own width rather than reading a mode off this table.
 
-Neither approaches 16×, and the reason is structural rather than fixable by tuning. Examples must be
-processed in sequence — each update changes the model the next example is scored against — so only
-the work *within* one example can be spread. That is a few hundred microseconds, against a measured
-~25 µs per parallel region and ~22 KB of task allocation per example. Batch *inference* has no such
-constraint and does reach ~12× on the same machine, because it threads across examples.
+Below `PARALLEL_MIN_WORK` the gate makes `:clauses` fall back to serial, which is what keeps the
+small configurations at ~1.0× instead of *slower* than `:none`. An earlier version gated only the
+update phase and left scoring unconditional, so the smallest shapes spawned a region per example to
+score work that then ran serially — 5× slower than `:none` at 20 clauses per class. The guarantee
+now is that a wrong mode costs nothing, not that the right one is obvious.
+
+Neither mode approaches 16×, and the reason is structural rather than fixable by tuning. Examples
+must be processed in sequence — each update changes the model the next example is scored against —
+so only the work *within* one example can be spread. That is a few hundred microseconds, against a
+measured ~25 µs per parallel region. Batch *inference* has no such constraint and reaches ~6-12×,
+because it threads across examples.
 
 Going faster than this would mean giving up exact sequential semantics — processing a mini-batch per
 parallel region, so updates within a batch do not see each other. That is an algorithmic change with
@@ -467,8 +488,11 @@ function train!(m::TMClassifier{ClassType}, X::AbstractVector{TMInput}, Y::Abstr
         isp = Vector{Bool}(undef, ncl)
         pv, nv = Vector{Int}(undef, ncl), Vector{Int}(undef, ncl)
         partial = Vector{Int}(undef, ncl * 2 * nchunk)
+        # One decision for the whole epoch: it depends only on the model's shape, so re-deciding it
+        # per example would be branch noise in the hot loop.
+        par = _worth_threading(m)
         @inbounds for i in order
-            update_example_clauses!(m, X[i], Y[i], pos, neg, upd, isp, pv, nv, partial, nchunk)
+            update_example_clauses!(m, X[i], Y[i], pos, neg, upd, isp, pv, nv, partial, nchunk, par)
         end
     end
     return m
