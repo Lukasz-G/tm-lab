@@ -39,11 +39,15 @@ Time inference over `X`, and optionally one training epoch.
 
 `warmup` runs one untimed pass first so compilation is not counted — without it the first
 measurement of a fresh session is dominated by codegen and the number is meaningless.
-Single-threaded by design: see the note on `train!`.
+
+**Report `Threads.nthreads()` alongside any number from here.** Inference threads across examples
+unconditionally, so an inference figure measured under `julia -t auto` is not comparable to one
+measured at a single thread. Training follows whatever `parallel` is passed through, defaulting to
+the serial schedule; see the note on `train!`.
 """
 function benchmark(m::TMClassifier, X::AbstractVector{TMInput}, Y=nothing;
                    loops::Integer=5, warmup::Bool=true, train::Bool=false,
-                   rng=Random.default_rng())
+                   rng=Random.default_rng(), parallel::Symbol=:none)
     warmup && predict(m, @view X[1:min(64, length(X))])
 
     times = Float64[]
@@ -59,7 +63,7 @@ function benchmark(m::TMClassifier, X::AbstractVector{TMInput}, Y=nothing;
     t_train = nothing
     if train
         Y === nothing && throw(ArgumentError("training benchmark needs labels"))
-        t_train = @elapsed train!(m, X, Y; rng=rng)
+        t_train = @elapsed train!(m, X, Y; rng=rng, parallel=parallel)
     end
 
     return BenchResult(length(X), loops, t_pred, length(X) / t_pred, t_train, acc)

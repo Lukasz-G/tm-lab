@@ -167,4 +167,6 @@ include("test_feedback_policy.jl")
 include("test_format.jl")
 include("test_inspect.jl")
 
+include("test_threading.jl")
+
 end
